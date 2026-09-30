@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../models/auto.dart';
+import '../models/vehicle.dart';
 
 class VehicleCard extends StatelessWidget {
-  final Auto car;
+  final Vehicle car;
   final bool isFavourite;
   final VoidCallback onTap;
   final VoidCallback onToggleFavourite;
@@ -31,15 +31,15 @@ class VehicleCard extends StatelessWidget {
           children: [
             Stack(
               children: [
-                AutoImagen(
-                  url: auto.imagenUrl,
-                  alto: 190,
+                VehicleImage(
+                  url: car.imageUrl,
+                  height: 190,
                   borderRadius: BorderRadius.zero,
                 ),
                 Positioned(
                   top: 10,
                   right: 10,
-                  child: _BotonFavorito(
+                  child: _FavButton(
                     isFavourite: isFavourite,
                     onPressed: onToggleFavourite,
                   ),
@@ -52,7 +52,7 @@ class VehicleCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    auto.titulo,
+                    car.title,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -61,14 +61,14 @@ class VehicleCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${auto.anio} • ${auto.kilometrosFormateados}',
+                    '${car.year} • ${car.formattedKilometers}',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: const Color(0xFF94A3B8),
                     ),
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    auto.precioFormateado,
+                    car.formattedPrice,
                     style: theme.textTheme.titleLarge?.copyWith(
                       color: const Color(0xFF2DD4BF),
                       fontWeight: FontWeight.w700,
@@ -111,15 +111,15 @@ class _FavButton extends StatelessWidget {
   }
 }
 
-class AutoImagen extends StatelessWidget {
+class VehicleImage extends StatelessWidget {
   final String url;
-  final double alto;
+  final double height;
   final BorderRadius borderRadius;
 
-  const AutoImagen({
+  const VehicleImage({
     super.key,
     required this.url,
-    required this.alto,
+    required this.height,
     this.borderRadius = BorderRadius.zero,
   });
 
@@ -129,7 +129,7 @@ class AutoImagen extends StatelessWidget {
       borderRadius: borderRadius,
       child: Image.network(
         url,
-        height: alto,
+        height: height,
         width: double.infinity,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) => _placeholder(),
@@ -143,7 +143,7 @@ class AutoImagen extends StatelessWidget {
 
   Widget _placeholder() {
     return Container(
-      height: alto,
+      height: height,
       width: double.infinity,
       decoration: const BoxDecoration(
         gradient: LinearGradient(

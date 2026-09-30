@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 
-import '../../shared/models/auto.dart';
-import '../../shared/widgets/auto_card.dart' show AutoImagen;
+import '../../shared/models/vehicle.dart';
+import '../../shared/widgets/vehicle_card.dart' show VehicleImage;
 
 // Detalle de un auto: foto, precio, especificaciones y CTA para agendar.
-class CarDetailView extends StatelessWidget {
-  final Auto auto;
+class VehicleDetailView extends StatelessWidget {
+  final Vehicle car;
 
-  const CarDetailView({super.key, required this.auto});
+  const VehicleDetailView({super.key, required this.car});
 
   void _scheduleVisit(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Visita para ${auto.titulo} — próximamente'),
+        content: Text('Visita para ${car.title} — próximamente'),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -30,7 +30,7 @@ class CarDetailView extends StatelessWidget {
             pinned: true,
             backgroundColor: const Color(0xFF0E1826),
             flexibleSpace: FlexibleSpaceBar(
-              background: AutoImagen(url: auto.imagenUrl, alto: 300),
+              background: VehicleImage(url: car.imageUrl, height: 300),
             ),
           ),
           SliverToBoxAdapter(
@@ -40,14 +40,14 @@ class CarDetailView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    auto.titulo,
+                    car.title,
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '${auto.anio} • ${auto.kilometrosFormateados}',
+                    '${car.year} • ${car.formattedKilometers}',
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: const Color(0xFF94A3B8),
                     ),
@@ -58,7 +58,7 @@ class CarDetailView extends StatelessWidget {
                     textBaseline: TextBaseline.alphabetic,
                     children: [
                       Text(
-                        auto.precioFormateado,
+                        car.formattedPrice,
                         style: theme.textTheme.headlineMedium?.copyWith(
                           color: const Color(0xFF2DD4BF),
                           fontWeight: FontWeight.w700,
@@ -88,7 +88,7 @@ class CarDetailView extends StatelessWidget {
                         child: _SpecTile(
                           icon: Icons.speed,
                           label: 'Kilometraje',
-                          value: auto.kilometrosFormateados,
+                          value: car.formattedKilometers,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -96,7 +96,7 @@ class CarDetailView extends StatelessWidget {
                         child: _SpecTile(
                           icon: Icons.local_gas_station,
                           label: 'Combustible',
-                          value: auto.combustible,
+                          value: car.fuel,
                         ),
                       ),
                     ],
@@ -108,7 +108,7 @@ class CarDetailView extends StatelessWidget {
                         child: _SpecTile(
                           icon: Icons.settings,
                           label: 'Transmisión',
-                          value: auto.transmision,
+                          value: car.transmission,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -116,7 +116,7 @@ class CarDetailView extends StatelessWidget {
                         child: _SpecTile(
                           icon: Icons.palette_outlined,
                           label: 'Color',
-                          value: auto.color,
+                          value: car.color,
                         ),
                       ),
                     ],
@@ -130,7 +130,7 @@ class CarDetailView extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    auto.descripcion,
+                    car.description,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: const Color(0xFFCBD5E1),
                       height: 1.6,

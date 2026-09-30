@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 
-import '../../shared/data/mock_autos.dart';
-import '../../shared/widgets/auto_card.dart';
-import 'auto_detalle_view.dart';
+import '../../shared/data/mock_vehicles.dart';
+import '../../shared/widgets/vehicle_card.dart';
+import 'vehicle_detail_view.dart';
 
-class CatalogoView extends StatefulWidget {
-  const CatalogoView({super.key});
+class CatalogView extends StatefulWidget {
+  const CatalogView({super.key});
 
   @override
-  State<CatalogoView> createState() => _CatalogoViewState();
+  State<CatalogView> createState() => _CatalogViewState();
 }
 
-class _CatalogoViewState extends State<CatalogoView> {
+class _CatalogViewState extends State<CatalogView> {
   final Set<String> _favourite = {};
 
   void _toggleFavourite(String autoId) {
@@ -22,11 +22,11 @@ class _CatalogoViewState extends State<CatalogoView> {
     });
   }
 
-  void _openDetail(int indice) {
+  void _openDetail(int index) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => AutoDetalleView(auto: mockAutos[indice]),
+        builder: (context) => VehicleDetailView(car: mockVehicles[index]),
       ),
     );
   }
@@ -49,7 +49,7 @@ class _CatalogoViewState extends State<CatalogoView> {
       ),
       body: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-        itemCount: mockAutos.length + 1,
+        itemCount: mockVehicles.length + 1,
         separatorBuilder: (context, index) => const SizedBox(height: 16),
         itemBuilder: (context, index) {
           if (index == 0) {
@@ -61,7 +61,7 @@ class _CatalogoViewState extends State<CatalogoView> {
                 const _FilterPills(),
                 const SizedBox(height: 20),
                 Text(
-                  '${mockAutos.length} autos disponibles',
+                  '${mockVehicles.length} autos disponibles',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: const Color(0xFF94A3B8),
                   ),
@@ -70,14 +70,14 @@ class _CatalogoViewState extends State<CatalogoView> {
             );
           }
 
-          final indiceAuto = index - 1;
-          final auto = mockAutos[indiceAuto];
+          final carIndex = index - 1;
+          final car = mockVehicles[carIndex];
 
-          return VehicleCar(
+          return VehicleCard(
             car: car,
-            isFavourite: _favourite.contains(auto.id),
-            onTap: () => _openDetail(indiceAuto),
-            onToggleFavourite: () => _toggleFavourite(auto.id),
+            isFavourite: _favourite.contains(car.id),
+            onTap: () => _openDetail(carIndex),
+            onToggleFavourite: () => _toggleFavourite(car.id),
           );
         },
       ),
@@ -119,7 +119,7 @@ class _SearchBar extends StatelessWidget {
 class _FilterPills extends StatelessWidget {
   const _FilterPills();
 
-  static const _filtros = ['Marca', 'Precio', 'Año', 'Ordenar'];
+  static const _filters = ['Marca', 'Precio', 'Año', 'Ordenar'];
 
   @override
   Widget build(BuildContext context) {
@@ -127,18 +127,18 @@ class _FilterPills extends StatelessWidget {
       height: 38,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: _filtros.length,
+        itemCount: _filters.length,
         separatorBuilder: (context, index) => const SizedBox(width: 10),
-        itemBuilder: (context, index) => _Pill(texto: _filtros[index]),
+        itemBuilder: (context, index) => _Pill(text: _filters[index]),
       ),
     );
   }
 }
 
 class _Pill extends StatelessWidget {
-  final String texto;
+  final String text;
 
-  const _Pill({required this.texto});
+  const _Pill({required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -152,7 +152,7 @@ class _Pill extends StatelessWidget {
       child: Row(
         children: [
           Text(
-            texto,
+            text,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.w500,
             ),
