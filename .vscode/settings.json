@@ -1,0 +1,36 @@
+{
+  // --- Formateo al guardar (Ctrl+S) ---
+  "editor.formatOnSave": true,
+
+  "[dart]": {
+    "editor.defaultFormatter": "Dart-Code.dart-code",
+    "editor.formatOnSave": true,
+    // Ordena los imports y saca los que no se usan, también al guardar.
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    },
+    // Guía visual en la columna 80, que es donde corta el formateador.
+    "editor.rulers": [80],
+    "editor.selectionHighlight": false,
+    "editor.tabCompletion": "onlySnippet",
+    "editor.wordBasedSuggestions": "off"
+  },
+
+  // --- Dart / Flutter ---
+  "dart.lineLength": 80,
+  // Dibuja las guías del árbol de widgets en el margen izquierdo.
+  "dart.previewFlutterUiGuides": true,
+  // Hot reload automático al guardar mientras la app corre.
+  "dart.flutterHotReloadOnSave": "manual",
+
+  // --- Ruido fuera del explorador y de las búsquedas ---
+  "files.exclude": {
+    "**/.dart_tool": true,
+    "**/build": true,
+    "**/.flutter-plugins-dependencies": true
+  },
+  "search.exclude": {
+    "**/.dart_tool": true,
+    "**/build": true
+  }
+}

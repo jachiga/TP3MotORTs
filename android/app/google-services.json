@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1009873129842",
+    "project_id": "motorts",
+    "storage_bucket": "motorts.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1009873129842:android:46be4d68333bd89c798deb",
+        "android_client_info": {
+          "package_name": "com.example.tp3motorts"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDF8cYujtHU_b_eVJb4UhvJQ0vPr3J4s5c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
