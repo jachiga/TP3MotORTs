@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../../shared/data/mock_vehicles.dart';
+import '../../shared/models/vehicle.dart';
 import '../../shared/widgets/vehicle_card.dart';
 import 'vehicle_detail_view.dart';
 
@@ -22,11 +23,11 @@ class _CatalogViewState extends State<CatalogView> {
     });
   }
 
-  void _openDetail(int index) {
+  void _openDetail(Vehicle car) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => VehicleDetailView(car: mockVehicles[index]),
+        builder: (context) => VehicleDetailView(car: car),
       ),
     );
   }
@@ -47,37 +48,67 @@ class _CatalogViewState extends State<CatalogView> {
           const SizedBox(width: 4),
         ],
       ),
-      body: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-        itemCount: mockVehicles.length + 1,
-        separatorBuilder: (context, index) => const SizedBox(height: 16),
-        itemBuilder: (context, index) {
-          if (index == 0) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const _SearchBar(),
-                const SizedBox(height: 14),
-                const _FilterPills(),
-                const SizedBox(height: 20),
-                Text(
-                  '${mockVehicles.length} autos disponibles',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF94A3B8),
-                  ),
-                ),
-              ],
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection('Vehiculos').snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return const Center(
+              child: Text('Error al conectar con la base de datos'),
             );
           }
 
-          final carIndex = index - 1;
-          final car = mockVehicles[carIndex];
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
 
-          return VehicleCard(
-            car: car,
-            isFavourite: _favourite.contains(car.id),
-            onTap: () => _openDetail(carIndex),
-            onToggleFavourite: () => _toggleFavourite(car.id),
+          final docs = snapshot.data?.docs ?? [];
+          final vehicles = docs.map((doc) {
+            return Vehicle.fromFirestore(
+              doc.id,
+              doc.data() as Map<String, dynamic>,
+            );
+          }).toList();
+
+          if (vehicles.isEmpty) {
+            return const Center(
+              child: Text('No hay vehículos cargados en Firebase'),
+            );
+          }
+
+          return ListView.separated(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+            itemCount: vehicles.length + 1,
+            separatorBuilder: (context, index) => const SizedBox(height: 16),
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const _SearchBar(),
+                    const SizedBox(height: 14),
+                    const _FilterPills(),
+                    const SizedBox(height: 20),
+                    Text(
+                      '${vehicles.length} autos disponibles',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: const Color(0xFF94A3B8),
+                      ),
+                    ),
+                  ],
+                );
+              }
+
+              final car = vehicles[index - 1];
+
+              return VehicleCard(
+                car: car,
+                isFavourite: _favourite.contains(car.id),
+                onTap: () => _openDetail(car),
+                onToggleFavourite: () => _toggleFavourite(car.id),
+              );
+            },
           );
         },
       ),

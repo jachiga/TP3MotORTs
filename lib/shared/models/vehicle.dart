@@ -25,6 +25,24 @@ class Vehicle {
     required this.imageUrl,
   });
 
+
+   factory Vehicle.fromFirestore(String id, Map<String, dynamic> data) {
+    return Vehicle(
+      id: id,
+      brand: data['brand'] ?? data['marca'] ?? '',
+      model: data['model'] ?? data['modelo'] ?? '',
+      year: ((data['year'] ?? data['anio'] ?? 0) as num).toInt(),
+kilometers: ((data['kilometers'] ?? data['kilometraje'] ?? 0) as num).toInt(),
+price: ((data['price'] ?? data['precio'] ?? 0) as num).toDouble(),
+      fuel: data['fuel'] ?? data['combustible'] ?? '',
+      transmission: data['transmission'] ?? data['transmision'] ?? '',
+      color: data['color'] ?? '',
+      description: data['description'] ?? '',
+      imageUrl: data['imageUrl'] ?? data['imagenUrl'] ?? '',
+    );
+  }
+
+
   String get title => '$brand $model';
 
   String get formattedPrice => '\$${_separateByThousand(price.round())}';
