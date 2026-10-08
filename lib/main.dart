@@ -1,13 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-import 'features/catalogo/catalogo_view.dart';
+import 'features/catalog/catalog_view.dart';
 
-void main() => runApp(const MainApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Inicializamos Firebase Web con las credenciales de tu proyecto
+  await Firebase.initializeApp(
+    options: const FirebaseOptions(
+      apiKey: "AIzaSyDMGdCSbvzlwzTWECFgNwH0GKW1NSHi320",
+      appId: "1:1009873129842:web:e1dafdf9f0b9e810798deb",
+      messagingSenderId: "1009873129842",
+      projectId: "motorts",
+    ),
+  );
+
+  runApp(const MainApp());
+}
 
 const _navy = Color(0xFF0E1826);
-const _superficie = Color(0xFF1B2A3F);
+const _surface = Color(0xFF1B2A3F);
 const _teal = Color(0xFF2DD4BF);
-const _textoSecundario = Color(0xFF94A3B8);
+const _secondaryText = Color(0xFF94A3B8);
 
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
@@ -23,7 +38,7 @@ class MainApp extends StatelessWidget {
         colorScheme: const ColorScheme.dark(
           primary: _teal,
           onPrimary: _navy,
-          surface: _superficie,
+          surface: _surface,
           onSurface: Colors.white,
         ),
         appBarTheme: const AppBarTheme(
@@ -53,17 +68,17 @@ class MainApp extends StatelessWidget {
           ),
         ),
         snackBarTheme: SnackBarThemeData(
-          backgroundColor: _superficie,
+          backgroundColor: _surface,
           contentTextStyle: const TextStyle(color: Colors.white),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        iconTheme: const IconThemeData(color: _textoSecundario),
+        iconTheme: const IconThemeData(color: _secondaryText),
         dividerColor: const Color(0xFF2A3D57),
       ),
-      home: const CatalogoView(),
+      home: const CatalogView(),
     );
   }
 }
