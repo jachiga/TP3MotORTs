@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../shared/models/vehicle.dart';
 import '../../shared/widgets/vehicle_card.dart' show VehicleImage;
 
-// Detalle de un auto: foto, precio, especificaciones y CTA para agendar.
+
 class VehicleDetailView extends StatelessWidget {
   final Vehicle car;
 
@@ -156,7 +156,7 @@ class VehicleDetailView extends StatelessWidget {
   }
 }
 
-// Celda de la grilla de especificaciones.
+
 class _SpecTile extends StatelessWidget {
   final IconData icon;
   final String label;

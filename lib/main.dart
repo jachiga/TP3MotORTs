@@ -1,19 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-
+import 'core/firebase_config.dart';
 import 'features/catalog/catalog_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inicializamos Firebase Web con las credenciales de tu proyecto
   await Firebase.initializeApp(
-    options: const FirebaseOptions(
-      apiKey: "AIzaSyDMGdCSbvzlwzTWECFgNwH0GKW1NSHi320",
-      appId: "1:1009873129842:web:e1dafdf9f0b9e810798deb",
-      messagingSenderId: "1009873129842",
-      projectId: "motorts",
-    ),
+    options: FirebaseConfig.webOptions,
   );
 
   runApp(const MainApp());
