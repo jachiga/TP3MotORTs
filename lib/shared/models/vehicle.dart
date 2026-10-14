@@ -6,15 +6,15 @@ class Vehicle {
   final String model;
   final int year;
   final int kilometers;
-  final int price;
+  final double price;
   final String fuel;
   final String transmission;
   final String color;
   final String description;
   final String imageUrl;
   final List<String> images;
-  final String status;
   final String branch;
+  final String status;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final DateTime? deletedAt;
@@ -31,45 +31,59 @@ class Vehicle {
     required this.color,
     required this.description,
     required this.imageUrl,
-    required this.images,
-    required this.status,
-    required this.branch,
+    this.images = const [],
+    this.branch = 'Sucursal Central',
+    this.status = 'active',
     this.createdAt,
     this.updatedAt,
     this.deletedAt,
   });
 
   factory Vehicle.fromFirestore(String docId, Map<String, dynamic> data) {
-    List<String> imageList = [];
-    if (data['imagenes'] != null && data['imagenes'] is List) {
-      imageList = List<String>.from(data['imagenes']);
-    } else if (data['imagenUrl'] != null && data['imagenUrl'].toString().isNotEmpty) {
-      imageList = [data['imagenUrl'].toString()];
+    DateTime? parseTimestamp(dynamic value) {
+      if (value is Timestamp) return value.toDate();
+      return null;
     }
 
     return Vehicle(
       id: docId,
-      brand: data['marca'] ?? data['brand'] ?? '',
-      model: data['modelo'] ?? data['model'] ?? '',
+      brand: data['marca'] ?? data['brand'] ?? 'Sin marca',
+      model: data['modelo'] ?? data['model'] ?? 'Sin modelo',
       year: (data['anio'] ?? data['year'] ?? 0) as int,
-      kilometers: (data['kilometros'] ?? data['kilometraje'] ?? 0) as int,
-      price: (data['precio'] ?? data['price'] ?? 0) as int,
-      fuel: data['combustible'] ?? data['fuel'] ?? '',
-      transmission: data['transmision'] ?? data['transmission'] ?? '',
-      color: data['color'] ?? '',
-      description: data['descripcion'] ?? data['descripción'] ?? data['description'] ?? '',
-      imageUrl: imageList.isNotEmpty ? imageList.first : (data['imagenUrl'] ?? ''),
-      images: imageList,
-      status: data['estado'] ?? 'publicado',
-      branch: data['sucursal'] ?? 'Sucursal Central',
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
-      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
-      deletedAt: (data['deletedAt'] as Timestamp?)?.toDate(),
+      kilometers: (data['kilometraje'] ?? data['kilometers'] ?? 0) as int,
+      price: (data['precio'] ?? data['price'] ?? 0).toDouble(),
+      fuel: data['combustible'] ?? data['fuel'] ?? 'Nafta',
+      transmission: data['transmision'] ?? data['transmission'] ?? 'Manual',
+      color: data['color'] ?? 'No especificado',
+      description: data['descripcion'] ?? data['description'] ?? '',
+      imageUrl: data['imageUrl'] ?? '',
+      images: List<String>.from(data['images'] ?? []),
+      branch: data['sucursal'] ?? data['branch'] ?? 'Sucursal Central',
+      status: data['status'] ?? 'active',
+      createdAt: parseTimestamp(data['createdAt']),
+      updatedAt: parseTimestamp(data['updatedAt']),
+      deletedAt: parseTimestamp(data['deletedAt']),
     );
   }
 
+  // Getters requeridos por la interfaz
   String get title => '$brand $model';
-  String get formattedPrice => '\$ $price';
-  String get formattedKilometers => '$kilometers km';
-  bool get isPublished => status == 'publicado' && deletedAt == null;
+  bool get isDeleted => status == 'deleted' || deletedAt != null;
+  bool get isActive => status != 'deleted' && deletedAt == null;
+  bool get isPublished => isActive;
+
+  String get formattedPrice {
+    final priceInt = price.toInt();
+    return '\$${priceInt.toString().replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m}.',
+        )}';
+  }
+
+  String get formattedKilometers {
+    return '${kilometers.toString().replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m}.',
+        )} km';
+  }
 }
