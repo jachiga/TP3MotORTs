@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../shared/models/vehicle.dart';
 import '../../shared/widgets/vehicle_card.dart';
+import '../visits/my_visits_view.dart';
 import 'vehicle_detail_view.dart';
 
 class CatalogView extends StatefulWidget {
@@ -40,6 +41,14 @@ class _CatalogViewState extends State<CatalogView> {
       appBar: AppBar(
         title: const Text('Explorar'),
         actions: [
+          IconButton(
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => MyVisitsView()),
+            ),
+            icon: const Icon(Icons.event_note),
+            tooltip: 'Mis visitas',
+          ),
           IconButton(
             onPressed: () {},
             icon: const Icon(Icons.notifications_none),
