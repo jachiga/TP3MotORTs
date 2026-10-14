@@ -66,7 +66,6 @@ class Vehicle {
     );
   }
 
-  // Getters requeridos por la interfaz
   String get title => '$brand $model';
   bool get isDeleted => status == 'deleted' || deletedAt != null;
   bool get isActive => status != 'deleted' && deletedAt == null;
@@ -76,14 +75,14 @@ class Vehicle {
     final priceInt = price.toInt();
     return '\$${priceInt.toString().replaceAllMapped(
           RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m}.',
+          (Match m) => '${m[0]}.',
         )}';
   }
 
   String get formattedKilometers {
     return '${kilometers.toString().replaceAllMapped(
           RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m}.',
+          (Match m) => '${m[0]}.',
         )} km';
   }
 }

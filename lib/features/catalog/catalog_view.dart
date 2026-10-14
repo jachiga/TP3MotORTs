@@ -16,6 +16,12 @@ class _CatalogViewState extends State<CatalogView> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedBrand = 'Todas';
+  late final Stream<QuerySnapshot> _vehiclesStream;
+
+  @override void initState() 
+  { super.initState(); 
+    _vehiclesStream = FirebaseFirestore.instance.collection('Vehiculos').snapshots(); 
+  }
 
 @override void dispose() { 
   _searchController.dispose(); 
@@ -56,7 +62,7 @@ super.dispose(); }
         ],
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('Vehiculos').snapshots(),
+        stream: _vehiclesStream,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return const Center(
@@ -132,6 +138,7 @@ super.dispose(); }
               final car = filteredVehicles[index - 1];
 
               return VehicleCard(
+                key: ValueKey(car.id),
                 car: car,
                 isFavourite: _favourite.contains(car.id),
                 onTap: () => _openDetail(car),
