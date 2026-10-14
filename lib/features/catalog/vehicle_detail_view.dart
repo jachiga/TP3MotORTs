@@ -2,19 +2,17 @@ import 'package:flutter/material.dart';
 
 import '../../shared/models/vehicle.dart';
 import '../../shared/widgets/vehicle_card.dart' show VehicleImage;
+import '../schedule/schedule_visit_screen.dart';
 
-// Detalle de un auto: foto, precio, especificaciones y CTA para agendar.
 class VehicleDetailView extends StatelessWidget {
   final Vehicle car;
 
   const VehicleDetailView({super.key, required this.car});
 
   void _scheduleVisit(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Visita para ${car.title} — próximamente'),
-        behavior: SnackBarBehavior.floating,
-      ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ScheduleVisitScreen(car: car)),
     );
   }
 
@@ -156,7 +154,6 @@ class VehicleDetailView extends StatelessWidget {
   }
 }
 
-// Celda de la grilla de especificaciones.
 class _SpecTile extends StatelessWidget {
   final IconData icon;
   final String label;

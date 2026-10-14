@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'features/catalog/catalog_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inicializamos Firebase Web con las credenciales de tu proyecto
   await Firebase.initializeApp(
     options: const FirebaseOptions(
       apiKey: "AIzaSyDMGdCSbvzlwzTWECFgNwH0GKW1NSHi320",
@@ -15,6 +15,8 @@ void main() async {
       projectId: "motorts",
     ),
   );
+
+  await initializeDateFormatting('es');
 
   runApp(const MainApp());
 }
