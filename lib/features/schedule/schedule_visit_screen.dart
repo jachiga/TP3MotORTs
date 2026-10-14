@@ -4,15 +4,18 @@ import 'package:table_calendar/table_calendar.dart';
 
 import '../../shared/data/mock_vehicles.dart';
 import '../../shared/models/vehicle.dart';
+import '../../shared/repositories/visit_repository.dart';
 import '../../shared/widgets/vehicle_card.dart' show VehicleImage;
 
 const _timeSlots = ['09:00', '10:30', '12:00', '14:00'];
 
 class ScheduleVisitScreen extends StatefulWidget {
   final Vehicle car;
+  final VisitRepository repository;
 
-  ScheduleVisitScreen({super.key, Vehicle? car})
-    : car = car ?? mockVehicles.first;
+  ScheduleVisitScreen({super.key, Vehicle? car, VisitRepository? repository})
+    : car = car ?? mockVehicles.first,
+      repository = repository ?? VisitRepository();
 
   @override
   State<ScheduleVisitScreen> createState() => _ScheduleVisitScreenState();
@@ -27,8 +30,10 @@ class _ScheduleVisitScreenState extends State<ScheduleVisitScreen> {
 
   DateTime? _selectedDay;
   String? _selectedSlot;
+  bool _isSubmitting = false;
 
-  bool get _canRequest => _selectedDay != null && _selectedSlot != null;
+  bool get _canRequest =>
+      _selectedDay != null && _selectedSlot != null && !_isSubmitting;
 
   @override
   void initState() {
@@ -46,17 +51,44 @@ class _ScheduleVisitScreenState extends State<ScheduleVisitScreen> {
     });
   }
 
-  void _requestVisit() {
-    final date = DateFormat.MMMMd(_locale).format(_selectedDay!);
+  Future<void> _requestVisit() async {
+    final day = _selectedDay!;
+    final slot = _selectedSlot!;
+    final [hour, minute] = slot.split(':').map(int.parse).toList();
+    final messenger = ScaffoldMessenger.of(context);
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    setState(() => _isSubmitting = true);
+    try {
+      await widget.repository.requestVisit(
+        clientId: currentClientId,
+        car: widget.car,
+        dateTime: DateTime(day.year, day.month, day.day, hour, minute),
+      );
+    } catch (_) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('No pudimos enviar la solicitud')),
+      );
+      return;
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+
+    final date = DateFormat.MMMMd(_locale).format(day);
+    messenger.showSnackBar(
       SnackBar(
         content: Text(
-          'Solicitud enviada: $date a las $_selectedSlot. '
+          'Solicitud enviada: $date a las $slot. '
           'Te avisaremos cuando sea confirmada.',
         ),
       ),
     );
+
+    if (mounted) {
+      setState(() {
+        _selectedDay = null;
+        _selectedSlot = null;
+      });
+    }
   }
 
   @override

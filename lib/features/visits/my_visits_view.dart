@@ -1,23 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../shared/data/mock_visits.dart';
 import '../../shared/models/visit.dart';
+import '../../shared/repositories/visit_repository.dart';
 import '../../shared/widgets/vehicle_card.dart' show VehicleImage;
 import '../catalog/catalog_view.dart';
 
 class MyVisitsView extends StatefulWidget {
-  final List<Visit> visits;
+  final VisitRepository repository;
 
-  MyVisitsView({super.key, List<Visit>? visits})
-    : visits = visits ?? mockVisits;
+  MyVisitsView({super.key, VisitRepository? repository})
+    : repository = repository ?? VisitRepository();
 
   @override
   State<MyVisitsView> createState() => _MyVisitsViewState();
 }
 
 class _MyVisitsViewState extends State<MyVisitsView> {
-  late final List<Visit> _visits = List.of(widget.visits);
+  // Created once so rebuilds don't open a new Firestore listener.
+  late final Stream<List<Visit>> _visits = widget.repository.getClientVisits(
+    currentClientId,
+  );
 
   Future<void> _cancelVisit(Visit visit) async {
     final confirmed = await showDialog<bool>(
@@ -26,10 +29,14 @@ class _MyVisitsViewState extends State<MyVisitsView> {
     );
     if (confirmed != true || !mounted) return;
 
-    setState(() {
-      final index = _visits.indexWhere((v) => v.id == visit.id);
-      _visits[index] = visit.copyWith(status: VisitStatus.cancelled);
-    });
+    try {
+      await widget.repository.cancelVisit(visit.id);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No pudimos cancelar la visita')),
+      );
+    }
   }
 
   void _goToCatalog() {
@@ -47,20 +54,37 @@ class _MyVisitsViewState extends State<MyVisitsView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Mis visitas')),
-      body: _visits.isEmpty
-          ? _EmptyVisits(onExplore: _goToCatalog)
-          : ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-              itemCount: _visits.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 16),
-              itemBuilder: (context, index) {
-                final visit = _visits[index];
-                return _VisitTile(
-                  visit: visit,
-                  onCancel: () => _cancelVisit(visit),
-                );
-              },
-            ),
+      body: StreamBuilder<List<Visit>>(
+        stream: _visits,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return const Center(child: Text('Error al cargar tus visitas'));
+          }
+
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final visits = snapshot.data!;
+
+          if (visits.isEmpty) {
+            return _EmptyVisits(onExplore: _goToCatalog);
+          }
+
+          return ListView.separated(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+            itemCount: visits.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 16),
+            itemBuilder: (context, index) {
+              final visit = visits[index];
+              return _VisitTile(
+                visit: visit,
+                onCancel: () => _cancelVisit(visit),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }
