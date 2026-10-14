@@ -3,18 +3,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'features/catalog/catalog_view.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: const FirebaseOptions(
-      apiKey: "AIzaSyDMGdCSbvzlwzTWECFgNwH0GKW1NSHi320",
-      appId: "1:1009873129842:web:e1dafdf9f0b9e810798deb",
-      messagingSenderId: "1009873129842",
-      projectId: "motorts",
-    ),
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   await initializeDateFormatting('es');
 
