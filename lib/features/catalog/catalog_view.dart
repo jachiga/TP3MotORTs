@@ -13,8 +13,14 @@ class CatalogView extends StatefulWidget {
 
 class _CatalogViewState extends State<CatalogView> {
   final Set<String> _favourite = {};
+  final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedBrand = 'Todas';
+
+@override void dispose() { 
+  _searchController.dispose(); 
+super.dispose(); }
+
 
   void _toggleFavourite(String autoId) {
     setState(() {
@@ -96,6 +102,7 @@ class _CatalogViewState extends State<CatalogView> {
              crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _SearchBar(
+                      controller: _searchController,
                       onChanged: (value) {
                         setState(() {
                           _searchQuery = value.trim();
@@ -139,9 +146,10 @@ class _CatalogViewState extends State<CatalogView> {
 }
 
 class _SearchBar extends StatelessWidget {
+  final TextEditingController controller;
   final ValueChanged<String> onChanged;
 
-  const _SearchBar({required this.onChanged});
+  const _SearchBar({required this.onChanged , required this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -158,6 +166,7 @@ class _SearchBar extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: TextField(
+              controller: controller,
               onChanged: onChanged,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
