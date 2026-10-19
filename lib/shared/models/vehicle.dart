@@ -15,8 +15,8 @@ class Vehicle {
   final List<String> images;
   final String branch;
   final String status;
-  final DateTime? createdAt;
-  final DateTime? updatedAt;
+  final DateTime createdAt;
+  final DateTime updatedAt;
   final DateTime? deletedAt;
 
   Vehicle({
@@ -34,18 +34,15 @@ class Vehicle {
     this.images = const [],
     this.branch = 'Sucursal Central',
     this.status = 'active',
-    this.createdAt,
-    this.updatedAt,
+   required this.createdAt,
+    required this.updatedAt,
     this.deletedAt,
-  });
+ 
+ 
+ });
 
-  factory Vehicle.fromFirestore(String docId, Map<String, dynamic> data) {
-    DateTime? parseTimestamp(dynamic value) {
-      if (value is Timestamp) return value.toDate();
-      return null;
-    }
-
-    return Vehicle(
+ factory Vehicle.fromFirestore(String docId, Map<String, dynamic> data) {
+   return Vehicle(
       id: docId,
       brand: data['marca'] ?? data['brand'] ?? 'Sin marca',
       model: data['modelo'] ?? data['model'] ?? 'Sin modelo',
@@ -60,9 +57,9 @@ class Vehicle {
       images: List<String>.from(data['images'] ?? []),
       branch: data['sucursal'] ?? data['branch'] ?? 'Sucursal Central',
       status: data['status'] ?? 'active',
-      createdAt: parseTimestamp(data['createdAt']),
-      updatedAt: parseTimestamp(data['updatedAt']),
-      deletedAt: parseTimestamp(data['deletedAt']),
+      createdAt: data['createdAt'] != null ? (data['createdAt'] is Timestamp ? (data['createdAt'] as Timestamp).toDate() : DateTime.tryParse(data['createdAt'].toString()) ?? DateTime.now()) : DateTime.now(),
+      updatedAt: data['updatedAt'] != null ? (data['updatedAt'] is Timestamp ? (data['updatedAt'] as Timestamp).toDate() : DateTime.tryParse(data['updatedAt'].toString()) ?? DateTime.now()) : DateTime.now(),
+      deletedAt: data['deletedAt'] != null ? (data['deletedAt'] is Timestamp ? (data['deletedAt'] as Timestamp).toDate() : DateTime.tryParse(data['deletedAt'].toString())) : null, 
     );
   }
 
