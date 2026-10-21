@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../shared/models/vehicle.dart';
@@ -18,15 +19,18 @@ class _CatalogViewState extends State<CatalogView> {
   String _selectedBrand = 'Todas';
   late final Stream<QuerySnapshot> _vehiclesStream;
 
-  @override void initState() 
-  { super.initState(); 
-    _vehiclesStream = FirebaseFirestore.instance.collection('Vehiculos').snapshots(); 
+  @override
+  void initState() {
+    super.initState();
+    _vehiclesStream =
+        FirebaseFirestore.instance.collection('Vehiculos').snapshots();
   }
 
-@override void dispose() { 
-  _searchController.dispose(); 
-super.dispose(); }
-
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   void _toggleFavourite(String autoId) {
     setState(() {
@@ -84,7 +88,6 @@ super.dispose(); }
             );
           }).where((v) => v.isPublished).toList();
 
-      
           final filteredVehicles = vehicles.where((car) {
             final query = _searchQuery.toLowerCase();
             final matchesSearch = query.isEmpty ||
@@ -105,7 +108,7 @@ super.dispose(); }
             itemBuilder: (context, index) {
               if (index == 0) {
                 return Column(
-             crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _SearchBar(
                       controller: _searchController,
@@ -156,7 +159,7 @@ class _SearchBar extends StatelessWidget {
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
 
-  const _SearchBar({required this.onChanged , required this.controller});
+  const _SearchBar({required this.onChanged, required this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -200,7 +203,14 @@ class _FilterPills extends StatelessWidget {
     required this.onBrandSelected,
   });
 
-  static const _brands = ['Todas', 'Honda', 'Toyota', 'Volkswagen', 'Ford', 'Chevrolet'];
+  static const _brands = [
+    'Todas',
+    'Honda',
+    'Toyota',
+    'Volkswagen',
+    'Ford',
+    'Chevrolet'
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -244,10 +254,12 @@ class _Pill extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF2DD4BF) : const Color(0xFF1B2A3F),
+          color:
+              isSelected ? const Color(0xFF2DD4BF) : const Color(0xFF1B2A3F),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: isSelected ? const Color(0xFF2DD4BF) : const Color(0xFF2A3D57),
+            color:
+                isSelected ? const Color(0xFF2DD4BF) : const Color(0xFF2A3D57),
           ),
         ),
         child: Center(

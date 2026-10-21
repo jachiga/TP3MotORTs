@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
 
+import 'package:flutter/material.dart';
 import '../../shared/models/vehicle.dart';
 import '../../shared/widgets/vehicle_card.dart' show VehicleImage;
-
+import '../schedule/schedule_visit_screen.dart';
 
 class VehicleDetailView extends StatelessWidget {
   final Vehicle car;
@@ -10,11 +10,9 @@ class VehicleDetailView extends StatelessWidget {
   const VehicleDetailView({super.key, required this.car});
 
   void _scheduleVisit(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Visita para ${car.title} — próximamente'),
-        behavior: SnackBarBehavior.floating,
-      ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ScheduleVisitScreen(car: car)),
     );
   }
 
@@ -23,6 +21,7 @@ class VehicleDetailView extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: const Color(0xFF0E1826),
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -130,7 +129,9 @@ class VehicleDetailView extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    car.description,
+                    car.description.trim().isNotEmpty
+                        ? car.description
+                        : 'Sin descripción cargada en Firebase para este vehículo.',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: const Color(0xFFCBD5E1),
                       height: 1.6,
@@ -155,7 +156,6 @@ class VehicleDetailView extends StatelessWidget {
     );
   }
 }
-
 
 class _SpecTile extends StatelessWidget {
   final IconData icon;

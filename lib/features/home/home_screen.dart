@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import '../catalog/catalog_view.dart';
 import '../visits/my_visits_view.dart';
@@ -12,9 +13,9 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _views =  [
-   const CatalogView(),
-    const MyVisitsView(),
+  final List<Widget> _views = [
+    const CatalogView(),
+    MyVisitsView(),
   ];
 
   @override
