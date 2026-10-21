@@ -1,3 +1,4 @@
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Vehicle {
@@ -34,34 +35,51 @@ class Vehicle {
     this.images = const [],
     this.branch = 'Sucursal Central',
     this.status = 'active',
-   required this.createdAt,
+    required this.createdAt,
     required this.updatedAt,
     this.deletedAt,
- 
- 
- });
+  });
 
- factory Vehicle.fromFirestore(String docId, Map<String, dynamic> data) {
-   return Vehicle(
+  factory Vehicle.fromFirestore(String docId, Map<String, dynamic> data) {
+    final imagesList = List<String>.from(data['images'] ?? []);
+    final mainImage = data['imageUrl'] ??
+        data['imagenUrl'] ??
+        (imagesList.isNotEmpty ? imagesList.first : '');
+
+    return Vehicle(
       id: docId,
-      brand: data['marca'] ?? data['brand'] ?? 'Sin marca',
-      model: data['modelo'] ?? data['model'] ?? 'Sin modelo',
-      year: (data['anio'] ?? data['year'] ?? 0) as int,
-      kilometers: (data['kilometraje'] ?? data['kilometers'] ?? 0) as int,
-      price: (data['precio'] ?? data['price'] ?? 0).toDouble(),
-      fuel: data['combustible'] ?? data['fuel'] ?? 'Nafta',
-      transmission: data['transmision'] ?? data['transmission'] ?? 'Manual',
+      brand: data['brand'] ?? data['marca'] ?? 'Sin marca',
+      model: data['model'] ?? data['modelo'] ?? 'Sin modelo',
+      year: (data['year'] ?? data['anio'] ?? 0) as int,
+      kilometers: (data['kilometers'] ?? data['kilometraje'] ?? data['km'] ?? 0) as int,
+      price: ((data['price'] ?? data['precio'] ?? 0) as num).toDouble(),
+      fuel: data['fuel'] ?? data['combustible'] ?? 'Nafta',
+      transmission: data['transmission'] ?? data['transmision'] ?? 'Manual',
       color: data['color'] ?? 'No especificado',
-      description: data['descripcion'] ?? data['description'] ?? '',
-      imageUrl: data['imageUrl'] ?? '',
-      images: List<String>.from(data['images'] ?? []),
-      branch: data['sucursal'] ?? data['branch'] ?? 'Sucursal Central',
+      description: data['description'] ?? data['descripcion'] ?? '',
+      imageUrl: mainImage,
+      images: imagesList,
+      branch: data['branch'] ?? data['sucursal'] ?? 'Sucursal Central',
       status: data['status'] ?? 'active',
-      createdAt: data['createdAt'] != null ? (data['createdAt'] is Timestamp ? (data['createdAt'] as Timestamp).toDate() : DateTime.tryParse(data['createdAt'].toString()) ?? DateTime.now()) : DateTime.now(),
-      updatedAt: data['updatedAt'] != null ? (data['updatedAt'] is Timestamp ? (data['updatedAt'] as Timestamp).toDate() : DateTime.tryParse(data['updatedAt'].toString()) ?? DateTime.now()) : DateTime.now(),
-      deletedAt: data['deletedAt'] != null ? (data['deletedAt'] is Timestamp ? (data['deletedAt'] as Timestamp).toDate() : DateTime.tryParse(data['deletedAt'].toString())) : null, 
+      createdAt: data['createdAt'] != null
+          ? (data['createdAt'] is Timestamp
+              ? (data['createdAt'] as Timestamp).toDate()
+              : DateTime.tryParse(data['createdAt'].toString()) ?? DateTime.now())
+          : DateTime.now(),
+      updatedAt: data['updatedAt'] != null
+          ? (data['updatedAt'] is Timestamp
+              ? (data['updatedAt'] as Timestamp).toDate()
+              : DateTime.tryParse(data['updatedAt'].toString()) ?? DateTime.now())
+          : DateTime.now(),
+      deletedAt: data['deletedAt'] != null
+          ? (data['deletedAt'] is Timestamp
+              ? (data['deletedAt'] as Timestamp).toDate()
+              : DateTime.tryParse(data['deletedAt'].toString()))
+          : null,
     );
   }
+
+  int get km => kilometers;
 
   String get title => '$brand $model';
   bool get isDeleted => status == 'deleted' || deletedAt != null;
