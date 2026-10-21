@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/vehicle.dart';
 import '../models/visit.dart';
 
-// TODO: replace with the logged-in user's id once login exists
 const currentClientId = 'user_1';
 
 class VisitRepository {

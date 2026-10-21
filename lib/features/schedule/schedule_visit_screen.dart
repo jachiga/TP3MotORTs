@@ -2,24 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
-import '../../shared/data/mock_vehicles.dart';
 import '../../shared/models/vehicle.dart';
 import '../../shared/repositories/visit_repository.dart';
 import '../../shared/widgets/vehicle_card.dart' show VehicleImage;
 
 const _timeSlots = ['09:00', '10:30', '12:00', '14:00'];
 
-class ScheduleVisitScreen extends StatefulWidget {
-  final Vehicle car;
-  final VisitRepository repository;
-
-  ScheduleVisitScreen({super.key, Vehicle? car, VisitRepository? repository})
-    : car = car ?? mockVehicles.first,
-      repository = repository ?? VisitRepository();
-
-  @override
-  State<ScheduleVisitScreen> createState() => _ScheduleVisitScreenState();
-}
+class ScheduleVisitScreen extends StatefulWidget { final Vehicle car; final VisitRepository repository; ScheduleVisitScreen({ super.key, required this.car, VisitRepository? repository, }) : repository = repository ?? VisitRepository(); @override State<ScheduleVisitScreen> createState() => _ScheduleVisitScreenState(); }
 
 class _ScheduleVisitScreenState extends State<ScheduleVisitScreen> {
   static const _locale = 'es';

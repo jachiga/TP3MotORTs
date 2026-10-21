@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -6,18 +7,19 @@ import '../../shared/repositories/visit_repository.dart';
 import '../../shared/widgets/vehicle_card.dart' show VehicleImage;
 import '../catalog/catalog_view.dart';
 
+const String currentClientId = 'client_123';
+
 class MyVisitsView extends StatefulWidget {
   final VisitRepository repository;
 
   MyVisitsView({super.key, VisitRepository? repository})
-    : repository = repository ?? VisitRepository();
+      : repository = repository ?? VisitRepository();
 
   @override
   State<MyVisitsView> createState() => _MyVisitsViewState();
 }
 
 class _MyVisitsViewState extends State<MyVisitsView> {
-  // Created once so rebuilds don't open a new Firestore listener.
   late final Stream<List<Visit>> _visits = widget.repository.getClientVisits(
     currentClientId,
   );

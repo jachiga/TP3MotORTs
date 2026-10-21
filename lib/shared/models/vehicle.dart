@@ -1,3 +1,6 @@
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Vehicle {
   final String id;
   final String brand;
@@ -10,8 +13,14 @@ class Vehicle {
   final String color;
   final String description;
   final String imageUrl;
+  final List<String> images;
+  final String branch;
+  final String status;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final DateTime? deletedAt;
 
-  const Vehicle({
+  Vehicle({
     required this.id,
     required this.brand,
     required this.model,
@@ -23,43 +32,72 @@ class Vehicle {
     required this.color,
     required this.description,
     required this.imageUrl,
+    this.images = const [],
+    this.branch = 'Sucursal Central',
+    this.status = 'active',
+    required this.createdAt,
+    required this.updatedAt,
+    this.deletedAt,
   });
 
+  factory Vehicle.fromFirestore(String docId, Map<String, dynamic> data) {
+    final imagesList = List<String>.from(data['images'] ?? []);
+    final mainImage = data['imageUrl'] ??
+        data['imagenUrl'] ??
+        (imagesList.isNotEmpty ? imagesList.first : '');
 
-   factory Vehicle.fromFirestore(String id, Map<String, dynamic> data) {
     return Vehicle(
-      id: id,
-      brand: data['brand'] ?? data['marca'] ?? '',
-      model: data['model'] ?? data['modelo'] ?? '',
-      year: ((data['year'] ?? data['anio'] ?? 0) as num).toInt(),
-kilometers: ((data['kilometers'] ?? data['kilometraje'] ?? 0) as num).toInt(),
-price: ((data['price'] ?? data['precio'] ?? 0) as num).toDouble(),
-      fuel: data['fuel'] ?? data['combustible'] ?? '',
-      transmission: data['transmission'] ?? data['transmision'] ?? '',
-      color: data['color'] ?? '',
-      description: data['description'] ?? '',
-      imageUrl: data['imageUrl'] ?? data['imagenUrl'] ?? '',
+      id: docId,
+      brand: data['brand'] ?? data['marca'] ?? 'Sin marca',
+      model: data['model'] ?? data['modelo'] ?? 'Sin modelo',
+      year: (data['year'] ?? data['anio'] ?? 0) as int,
+      kilometers: (data['kilometers'] ?? data['kilometraje'] ?? data['km'] ?? 0) as int,
+      price: ((data['price'] ?? data['precio'] ?? 0) as num).toDouble(),
+      fuel: data['fuel'] ?? data['combustible'] ?? 'Nafta',
+      transmission: data['transmission'] ?? data['transmision'] ?? 'Manual',
+      color: data['color'] ?? 'No especificado',
+      description: data['description'] ?? data['descripcion'] ?? '',
+      imageUrl: mainImage,
+      images: imagesList,
+      branch: data['branch'] ?? data['sucursal'] ?? 'Sucursal Central',
+      status: data['status'] ?? 'active',
+      createdAt: data['createdAt'] != null
+          ? (data['createdAt'] is Timestamp
+              ? (data['createdAt'] as Timestamp).toDate()
+              : DateTime.tryParse(data['createdAt'].toString()) ?? DateTime.now())
+          : DateTime.now(),
+      updatedAt: data['updatedAt'] != null
+          ? (data['updatedAt'] is Timestamp
+              ? (data['updatedAt'] as Timestamp).toDate()
+              : DateTime.tryParse(data['updatedAt'].toString()) ?? DateTime.now())
+          : DateTime.now(),
+      deletedAt: data['deletedAt'] != null
+          ? (data['deletedAt'] is Timestamp
+              ? (data['deletedAt'] as Timestamp).toDate()
+              : DateTime.tryParse(data['deletedAt'].toString()))
+          : null,
     );
   }
 
+  int get km => kilometers;
 
   String get title => '$brand $model';
+  bool get isDeleted => status == 'deleted' || deletedAt != null;
+  bool get isActive => status != 'deleted' && deletedAt == null;
+  bool get isPublished => isActive;
 
-  String get formattedPrice => '\$${_separateByThousand(price.round())}';
-
-  String get formattedKilometers => '${_separateByThousand(kilometers)} km';
-}
-
-String _separateByThousand(int value) {
-  final digits = value.abs().toString();
-  final buffer = StringBuffer();
-
-  for (var i = 0; i < digits.length; i++) {
-    if (i > 0 && (digits.length - i) % 3 == 0) {
-      buffer.write('.');
-    }
-    buffer.write(digits[i]);
+  String get formattedPrice {
+    final priceInt = price.toInt();
+    return '\$${priceInt.toString().replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[0]}.',
+        )}';
   }
 
-  return value < 0 ? '-$buffer' : buffer.toString();
+  String get formattedKilometers {
+    return '${kilometers.toString().replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[0]}.',
+        )} km';
+  }
 }
