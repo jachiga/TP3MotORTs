@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../widgets/custom_button.dart';
+import 'register_view.dart';
 
 class LoginView extends StatefulWidget {
 const LoginView({super.key});
@@ -25,26 +26,24 @@ _passwordController.dispose();
 super.dispose();
 }
 
-Future _handleLogin() async {
-if (!_formKey.currentState!.validate()) return;
+Future<void> _handleLogin() async {
+  if (!_formKey.currentState!.validate()) return;
 
-setState(() => _isLoading = true);
+  setState(() => _isLoading = true);
 
-try {
-  await _authService.signInWithEmailAndPassword(
-    email: _emailController.text,
-    password: _passwordController.text,
-  );
-} on AuthException catch (e) {
-  if (!mounted) return;
-  _showErrorSnackBar(e.message);
-} finally {
-  if (mounted) {
-    setState(() => _isLoading = false);
+  try {
+    await _authService.signInWithEmailAndPassword(
+      email: _emailController.text,
+      password: _passwordController.text,
+    );
+  } catch (e) {
+    if (!mounted) return;
+    _showErrorSnackBar(e.toString().replaceAll('Exception: ', ''));
+  } finally {
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
   }
-}
-
-
 }
 
 void _showErrorSnackBar(String message) {
@@ -300,7 +299,12 @@ return Scaffold(
                   ),
                   GestureDetector(
                     onTap: () {
-                      // TODO: Navegar al Registro
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const RegisterView(),
+                        ),
+                      );
                     },
                     child: const Text(
                       'Regístrate',
