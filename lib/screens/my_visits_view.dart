@@ -1,19 +1,19 @@
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../shared/models/visit.dart';
-import '../../shared/repositories/visit_repository.dart';
-import '../../shared/widgets/vehicle_card.dart' show VehicleImage;
-import '../catalog/catalog_view.dart';
+import '../shared/models/visit.dart';
+import '../shared/repositories/visit_repository.dart';
+import '../shared/widgets/vehicle_card.dart' show VehicleImage;
+import 'catalog_view.dart';
 
 const String currentClientId = 'client_123';
 
 class MyVisitsView extends StatefulWidget {
+  static const String name = 'visits';
   final VisitRepository repository;
 
   MyVisitsView({super.key, VisitRepository? repository})
-      : repository = repository ?? VisitRepository();
+    : repository = repository ?? VisitRepository();
 
   @override
   State<MyVisitsView> createState() => _MyVisitsViewState();

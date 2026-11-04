@@ -3,39 +3,75 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'firebase_options.dart';
-import 'features/home/home_screen.dart';
+import 'core/router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
- 
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await initializeDateFormatting('es');
-
   runApp(const MainApp());
 }
+
+const _navy = Color(0xFF0E1826);
+const _surface = Color(0xFF1B2A3F);
+const _teal = Color(0xFF2DD4BF);
+const _secondaryText = Color(0xFF94A3B8);
 
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
+    return MaterialApp.router(
       title: 'MotORTs',
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF0E1826),
-        primaryColor: const Color(0xFF2DD4BF),
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: _navy,
         colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF2DD4BF),
-          surface: Color(0xFF1B2A3F),
+          primary: _teal,
+          onPrimary: _navy,
+          surface: _surface,
+          onSurface: Colors.white,
         ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: _navy,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: false,
+          titleTextStyle: TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+          ),
+          iconTheme: IconThemeData(color: Colors.white),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _teal,
+            foregroundColor: _navy,
+            elevation: 0,
+            textStyle: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+        ),
+        snackBarTheme: SnackBarThemeData(
+          backgroundColor: _surface,
+          contentTextStyle: const TextStyle(color: Colors.white),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        iconTheme: const IconThemeData(color: _secondaryText),
+        dividerColor: const Color(0xFF2A3D57),
       ),
-      home: const HomeScreen(),
+      routerConfig: appRouter,
     );
   }
 }
