@@ -3,17 +3,34 @@ import '../screens/catalog_view.dart';
 import '../screens/favorites_screen.dart';
 import '../screens/my_visits_view.dart';
 import '../screens/home_screen.dart';
-import '../screens/login_screen.dart';
 import '../screens/main_shell.dart';
+import '../services/auth_service.dart';
+import '../views/login_view.dart';
 
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
+const _loginPath = '/';
+
+final _authService = AuthService();
+
 final appRouter = GoRouter(
+  refreshListenable: _StreamListenable(_authService.authStateChanges),
+  redirect: (context, state) {
+    final loggedIn = _authService.currentUser != null;
+    final onLogin = state.matchedLocation == _loginPath;
+
+    if (!loggedIn) return onLogin ? null : _loginPath;
+    if (onLogin) return '/home';
+    return null;
+  },
   routes: [
     GoRoute(
-      name: LoginScreen.name,
-      path: '/',
-      builder: (context, state) => const LoginScreen(),
+      name: 'login',
+      path: _loginPath,
+      builder: (context, state) => const LoginView(),
     ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) =>
@@ -25,7 +42,12 @@ final appRouter = GoRouter(
               name: HomeScreen.name,
               path: '/home',
               builder: (context, state) =>
-                  HomeScreen(userName: state.extra as String? ?? ''),
+                  HomeScreen(
+                    userName:
+                        state.extra as String? ??
+                        _authService.currentUser?.displayName ??
+                        '',
+                  ),
             ),
           ],
         ),
@@ -65,3 +87,18 @@ final appRouter = GoRouter(
     ),
   ],
 );
+
+/// Notifica a GoRouter cada vez que cambia el estado de autenticación.
+class _StreamListenable extends ChangeNotifier {
+  late final StreamSubscription<dynamic> _subscription;
+
+  _StreamListenable(Stream<dynamic> stream) {
+    _subscription = stream.listen((_) => notifyListeners());
+  }
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}
