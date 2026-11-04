@@ -1,0 +1,75 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Helpers ----------
+    function signedIn() { return request.auth != null; }
+    function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
+    function me() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    function isStaff() {
+      return signedIn() && me().role in ['employee', 'admin'] && me().status == 'active';
+    }
+    function isAdmin() {
+      return signedIn() && me().role == 'admin' && me().status == 'active';
+    }
+    function onlyChanges(fields) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
+    }
+
+    // ---------- Usuarios ----------
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isStaff();
+
+      // Al registrarse, un cliente solo puede crearse como 'client' (no puede ponerse admin)
+      allow create: if isAdmin() || (
+        isOwner(uid)
+        && request.resource.data.role == 'client'
+        && request.resource.data.status == 'active'
+        && request.resource.data.email == request.auth.token.email
+      );
+
+      // El usuario edita sus datos personales; solo el admin cambia role/status
+      allow update: if isAdmin()
+        || (isOwner(uid) && onlyChanges(['fullName', 'phone', 'photoUrl']));
+      allow delete: if isAdmin();
+
+      // Favoritos: users/{uid}/favorites/{vehicleId}
+      match /favorites/{vehicleId} {
+        allow read, delete: if isOwner(uid);
+        allow create: if isOwner(uid)
+          && exists(/databases/$(database)/documents/Vehiculos/$(vehicleId));
+      }
+    }
+
+    // ---------- Vehículos ----------
+    match /Vehiculos/{vehicleId} {
+      allow read: if true;                 // catálogo público
+      allow create, update: if isStaff();  // empleados y admin cargan/editan
+      allow delete: if isAdmin();          // borrado físico solo admin (lo normal es soft delete)
+    }
+
+    // ---------- Visitas ----------
+    match /visits/{visitId} {
+      allow read: if isStaff()
+        || (signedIn() && resource.data.clientId == request.auth.uid);
+
+      allow create: if signedIn()
+        && request.resource.data.clientId == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.deletedAt == null
+        && request.resource.data.dateTime > request.time
+        && exists(/databases/$(database)/documents/Vehiculos/$(request.resource.data.vehicleId));
+
+      // El cliente solo puede cancelar la suya; el staff puede confirmar/reprogramar/etc.
+      allow update: if isStaff() || (
+        signedIn()
+        && resource.data.clientId == request.auth.uid
+        && onlyChanges(['status', 'updatedAt'])
+        && request.resource.data.status == 'cancelled'
+      );
+      allow delete: if isAdmin();
+    }
+  }
+}

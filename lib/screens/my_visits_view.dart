@@ -6,8 +6,6 @@ import '../shared/repositories/visit_repository.dart';
 import '../shared/widgets/vehicle_card.dart' show VehicleImage;
 import 'catalog_view.dart';
 
-const String currentClientId = 'client_123';
-
 class MyVisitsView extends StatefulWidget {
   static const String name = 'visits';
   final VisitRepository repository;
