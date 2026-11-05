@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../shared/models/vehicle.dart';
 import '../../shared/widgets/vehicle_card.dart';
+import 'package:tp3motorts/shared/widgets/empty_state_widget.dart';
 import 'vehicle_detail_view.dart';
 
 class CatalogView extends StatefulWidget {
@@ -47,6 +48,14 @@ class _CatalogViewState extends State<CatalogView> {
         builder: (context) => VehicleDetailView(car: car),
       ),
     );
+  }
+
+  void _clearFilters() {
+    setState(() {
+      _searchController.clear();
+      _searchQuery = '';
+      _selectedBrand = 'Todas';
+    });
   }
 
   @override
@@ -101,53 +110,80 @@ class _CatalogViewState extends State<CatalogView> {
             return matchesSearch && matchesBrand;
           }).toList();
 
-          return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-            itemCount: filteredVehicles.length + 1,
-            separatorBuilder: (context, index) => const SizedBox(height: 16),
-            itemBuilder: (context, index) {
-              if (index == 0) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _SearchBar(
-                      controller: _searchController,
-                      onChanged: (value) {
-                        setState(() {
-                          _searchQuery = value.trim();
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 14),
-                    _FilterPills(
-                      selectedBrand: _selectedBrand,
-                      onBrandSelected: (brand) {
-                        setState(() {
-                          _selectedBrand = brand;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      '${filteredVehicles.length} autos disponibles',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF94A3B8),
+          return CustomScrollView(
+            slivers: [
+              // Cabecera fija: buscador, pastillas de marca y contador
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _SearchBar(
+                        controller: _searchController,
+                        onChanged: (value) {
+                          setState(() {
+                            _searchQuery = value.trim();
+                          });
+                        },
                       ),
+                      const SizedBox(height: 14),
+                      _FilterPills(
+                        selectedBrand: _selectedBrand,
+                        onBrandSelected: (brand) {
+                          setState(() {
+                            _selectedBrand = brand;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        '${filteredVehicles.length} autos disponibles',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: const Color(0xFF94A3B8),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Si no hay resultados -> mostramos el EmptyStateWidget
+              if (filteredVehicles.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: EmptyStateWidget(
+                    title: 'No se encontraron autos con esos criterios',
+                    subtitle: 'Intentá modificando los filtros de búsqueda',
+                    buttonText: 'Limpiar filtros',
+                    icon: Icons.search,
+                    onButtonPressed: _clearFilters,
+                  ),
+                )
+              // Si hay autos -> listado de tarjetas
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final car = filteredVehicles[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: VehicleCard(
+                            key: ValueKey(car.id),
+                            car: car,
+                            isFavourite: _favourite.contains(car.id),
+                            onTap: () => _openDetail(car),
+                            onToggleFavourite: () => _toggleFavourite(car.id),
+                          ),
+                        );
+                      },
+                      childCount: filteredVehicles.length,
                     ),
-                  ],
-                );
-              }
-
-              final car = filteredVehicles[index - 1];
-
-              return VehicleCard(
-                key: ValueKey(car.id),
-                car: car,
-                isFavourite: _favourite.contains(car.id),
-                onTap: () => _openDetail(car),
-                onToggleFavourite: () => _toggleFavourite(car.id),
-              );
-            },
+                  ),
+                ),
+            ],
           );
         },
       ),
