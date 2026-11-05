@@ -1,20 +1,26 @@
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../shared/models/vehicle.dart';
 import '../../shared/widgets/vehicle_card.dart';
-import 'package:tp3motorts/shared/widgets/empty_state_widget.dart';
+import '../../shared/widgets/empty_state_widget.dart';
 import 'vehicle_detail_view.dart';
 
 class CatalogView extends StatefulWidget {
-  const CatalogView({super.key});
+  final Set<String>? favoriteIds;
+  final Function(String)? onToggleFavourite;
+
+  const CatalogView({
+    super.key,
+    this.favoriteIds,
+    this.onToggleFavourite,
+  });
 
   @override
   State<CatalogView> createState() => _CatalogViewState();
 }
 
 class _CatalogViewState extends State<CatalogView> {
-  final Set<String> _favourite = {};
+  final Set<String> _localFavourites = {};
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedBrand = 'Todas';
@@ -34,11 +40,22 @@ class _CatalogViewState extends State<CatalogView> {
   }
 
   void _toggleFavourite(String autoId) {
-    setState(() {
-      if (!_favourite.remove(autoId)) {
-        _favourite.add(autoId);
-      }
-    });
+    if (widget.onToggleFavourite != null) {
+      widget.onToggleFavourite!(autoId);
+    } else {
+      setState(() {
+        if (!_localFavourites.remove(autoId)) {
+          _localFavourites.add(autoId);
+        }
+      });
+    }
+  }
+
+  bool _isCarFavourite(String autoId) {
+    if (widget.favoriteIds != null) {
+      return widget.favoriteIds!.contains(autoId);
+    }
+    return _localFavourites.contains(autoId);
   }
 
   void _openDetail(Vehicle car) {
@@ -110,80 +127,65 @@ class _CatalogViewState extends State<CatalogView> {
             return matchesSearch && matchesBrand;
           }).toList();
 
-          return CustomScrollView(
-            slivers: [
-              // Cabecera fija: buscador, pastillas de marca y contador
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _SearchBar(
-                        controller: _searchController,
-                        onChanged: (value) {
-                          setState(() {
-                            _searchQuery = value.trim();
-                          });
-                        },
+          return ListView.separated(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+            itemCount: filteredVehicles.isEmpty ? 2 : filteredVehicles.length + 1,
+            separatorBuilder: (context, index) => const SizedBox(height: 16),
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _SearchBar(
+                      controller: _searchController,
+                      onChanged: (value) {
+                        setState(() {
+                          _searchQuery = value.trim();
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                    _FilterPills(
+                      selectedBrand: _selectedBrand,
+                      onBrandSelected: (brand) {
+                        setState(() {
+                          _selectedBrand = brand;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      '${filteredVehicles.length} autos disponibles',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: const Color(0xFF94A3B8),
                       ),
-                      const SizedBox(height: 14),
-                      _FilterPills(
-                        selectedBrand: _selectedBrand,
-                        onBrandSelected: (brand) {
-                          setState(() {
-                            _selectedBrand = brand;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        '${filteredVehicles.length} autos disponibles',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF94A3B8),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+                    ),
+                  ],
+                );
+              }
 
-              // Si no hay resultados -> mostramos el EmptyStateWidget
-              if (filteredVehicles.isEmpty)
-                SliverFillRemaining(
-                  hasScrollBody: false,
+              if (filteredVehicles.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.only(top: 40.0),
                   child: EmptyStateWidget(
-                    title: 'No se encontraron autos con esos criterios',
-                    subtitle: 'Intentá modificando los filtros de búsqueda',
+                    title: 'No se encontraron vehículos',
+                    subtitle: 'Probá ajustando la búsqueda o quitando los filtros de marca.',
                     buttonText: 'Limpiar filtros',
-                    icon: Icons.search,
                     onButtonPressed: _clearFilters,
                   ),
-                )
-              // Si hay autos -> listado de tarjetas
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final car = filteredVehicles[index];
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: VehicleCard(
-                            key: ValueKey(car.id),
-                            car: car,
-                            isFavourite: _favourite.contains(car.id),
-                            onTap: () => _openDetail(car),
-                            onToggleFavourite: () => _toggleFavourite(car.id),
-                          ),
-                        );
-                      },
-                      childCount: filteredVehicles.length,
-                    ),
-                  ),
-                ),
-            ],
+                );
+              }
+
+              final car = filteredVehicles[index - 1];
+
+              return VehicleCard(
+                key: ValueKey(car.id),
+                car: car,
+                isFavourite: _isCarFavourite(car.id),
+                onTap: () => _openDetail(car),
+                onToggleFavourite: () => _toggleFavourite(car.id),
+              );
+            },
           );
         },
       ),
