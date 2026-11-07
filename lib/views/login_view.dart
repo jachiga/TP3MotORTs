@@ -249,7 +249,7 @@ return Scaffold(
                     child: Text(
                       'o continuar con',
                       style: TextStyle(
-                        color: textMuted.withOpacity(0.8),
+                        color: textMuted.withValues(alpha: 0.8),
                         fontSize: 13,
                       ),
                     ),

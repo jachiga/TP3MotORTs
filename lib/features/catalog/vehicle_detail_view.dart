@@ -1,24 +1,69 @@
-
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../shared/models/vehicle.dart';
 import '../../shared/widgets/vehicle_card.dart' show VehicleImage;
 import '../schedule/schedule_visit_screen.dart';
 
-class VehicleDetailView extends StatelessWidget {
+class VehicleDetailView extends StatefulWidget {
   final Vehicle car;
 
   const VehicleDetailView({super.key, required this.car});
 
+  @override
+  State<VehicleDetailView> createState() => _VehicleDetailViewState();
+}
+
+class _VehicleDetailViewState extends State<VehicleDetailView> {
+  int _currentImageIndex = 0;
+  late final PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
   void _scheduleVisit(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => ScheduleVisitScreen(car: car)),
+      MaterialPageRoute(
+        builder: (context) => ScheduleVisitScreen(car: widget.car),
+      ),
     );
+  }
+
+  void _nextImage(int total) {
+    if (_currentImageIndex < total - 1) {
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  void _prevImage() {
+    if (_currentImageIndex > 0) {
+      _pageController.previousPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final car = widget.car;
+
+    final List<String> images = (car.images.isNotEmpty)
+        ? car.images
+        : (car.imageUrl.isNotEmpty ? [car.imageUrl] : []);
 
     return Scaffold(
       backgroundColor: const Color(0xFF0E1826),
@@ -29,7 +74,143 @@ class VehicleDetailView extends StatelessWidget {
             pinned: true,
             backgroundColor: const Color(0xFF0E1826),
             flexibleSpace: FlexibleSpaceBar(
-              background: VehicleImage(url: car.imageUrl, height: 300),
+              background: images.isNotEmpty
+                  ? Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        ScrollConfiguration(
+                          behavior: ScrollConfiguration.of(context).copyWith(
+                            dragDevices: {
+                              PointerDeviceKind.touch,
+                              PointerDeviceKind.mouse,
+                            },
+                          ),
+                          child: PageView.builder(
+                            controller: _pageController,
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            itemCount: images.length,
+                            onPageChanged: (index) {
+                              setState(() {
+                                _currentImageIndex = index;
+                              });
+                            },
+                            itemBuilder: (context, index) {
+                              return Image.network(
+                                images[index],
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => const Center(
+                                  child: Icon(
+                                    Icons.broken_image,
+                                    size: 60,
+                                    color: Color(0xFF94A3B8),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        if (images.length > 1 && _currentImageIndex > 0)
+                          Positioned(
+                            left: 12,
+                            top: 0,
+                            bottom: 0,
+                            child: Center(
+                              child: InkWell(
+                                onTap: _prevImage,
+                                borderRadius: BorderRadius.circular(24),
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.55),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.chevron_left,
+                                    color: Colors.white,
+                                    size: 28,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (images.length > 1 &&
+                            _currentImageIndex < images.length - 1)
+                          Positioned(
+                            right: 12,
+                            top: 0,
+                            bottom: 0,
+                            child: Center(
+                              child: InkWell(
+                                onTap: () => _nextImage(images.length),
+                                borderRadius: BorderRadius.circular(24),
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.55)
+
+,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.chevron_right,
+                                    color: Colors.white,
+                                    size: 28,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (images.length > 1)
+                          Positioned(
+                            bottom: 16,
+                            right: 16,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.65),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                '${_currentImageIndex + 1} / ${images.length}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (images.length > 1)
+                          Positioned(
+                            bottom: 16,
+                            left: 0,
+                            right: 0,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(
+                                images.length,
+                                (i) => AnimatedContainer(
+                                  duration: const Duration(milliseconds: 250),
+                                  margin:
+                                      const EdgeInsets.symmetric(horizontal: 3),
+                                  width: _currentImageIndex == i ? 16 : 6,
+                                  height: 6,
+                                  decoration: BoxDecoration(
+                                    color: _currentImageIndex == i
+                                        ? const Color(0xFF2DD4BF)
+                                        : Colors.white.withValues(alpha: 0.4),
+                                    borderRadius: BorderRadius.circular(3),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    )
+                  : VehicleImage(url: car.imageUrl, height: 300),
             ),
           ),
           SliverToBoxAdapter(
@@ -171,7 +352,6 @@ class _SpecTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
