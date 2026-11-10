@@ -32,7 +32,10 @@ class _ScheduleVisitScreenState extends State<ScheduleVisitScreen> {
   bool _isSubmitting = false;
 
   bool get _canRequest =>
-      _selectedDay != null && _selectedSlot != null && !_isSubmitting;
+      _selectedDay != null &&
+      _selectedSlot != null &&
+      _isSlotAvailable(_selectedSlot!) &&
+      !_isSubmitting;
 
   @override
   void initState() {
@@ -47,13 +50,26 @@ class _ScheduleVisitScreenState extends State<ScheduleVisitScreen> {
     setState(() {
       _selectedDay = selectedDay;
       _focusedDay = focusedDay;
+      if (_selectedSlot != null && !_isSlotAvailable(_selectedSlot!)) {
+        _selectedSlot = null;
+      }
     });
+  }
+
+  DateTime _slotDateTime(DateTime day, String slot) {
+    final [hour, minute] = slot.split(':').map(int.parse).toList();
+    return DateTime(day.year, day.month, day.day, hour, minute);
+  }
+
+  bool _isSlotAvailable(String slot) {
+    final day = _selectedDay;
+    if (day == null) return true;
+    return _slotDateTime(day, slot).isAfter(DateTime.now());
   }
 
   Future<void> _requestVisit() async {
     final day = _selectedDay!;
     final slot = _selectedSlot!;
-    final [hour, minute] = slot.split(':').map(int.parse).toList();
     final messenger = ScaffoldMessenger.of(context);
 
     setState(() => _isSubmitting = true);
@@ -61,7 +77,7 @@ class _ScheduleVisitScreenState extends State<ScheduleVisitScreen> {
       await widget.repository.requestVisit(
         clientId: currentClientId,
         car: widget.car,
-        dateTime: DateTime(day.year, day.month, day.day, hour, minute),
+        dateTime: _slotDateTime(day, slot),
       );
     } catch (_) {
       messenger.showSnackBar(
@@ -135,6 +151,7 @@ class _ScheduleVisitScreenState extends State<ScheduleVisitScreen> {
                 _TimeSlotChip(
                   label: slot,
                   selected: slot == _selectedSlot,
+                  enabled: _isSlotAvailable(slot),
                   onSelected: () => setState(() => _selectedSlot = slot),
                 ),
             ],
@@ -327,32 +344,51 @@ class _PendingNotice extends StatelessWidget {
 class _TimeSlotChip extends StatelessWidget {
   final String label;
   final bool selected;
+  final bool enabled;
   final VoidCallback onSelected;
 
   const _TimeSlotChip({
     required this.label,
     required this.selected,
     required this.onSelected,
+    this.enabled = true,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final disabledColor = colors.onSurface.withValues(alpha: 0.25);
+
+    final Color labelColor;
+    final Color borderColor;
+    if (!enabled) {
+      labelColor = disabledColor;
+      borderColor = theme.dividerColor.withValues(alpha: 0.4);
+    } else if (selected) {
+      labelColor = colors.onPrimary;
+      borderColor = colors.primary;
+    } else {
+      labelColor = colors.onSurface;
+      borderColor = theme.dividerColor;
+    }
 
     return ChoiceChip(
       label: Text(label),
-      selected: selected,
-      onSelected: (_) => onSelected(),
+      selected: selected && enabled,
+      onSelected: enabled ? (_) => onSelected() : null,
       showCheckmark: false,
       backgroundColor: colors.surface,
+      disabledColor: colors.surface.withValues(alpha: 0.5),
       selectedColor: colors.primary,
-      side: BorderSide(color: selected ? colors.primary : theme.dividerColor),
+      side: BorderSide(color: borderColor),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       labelStyle: theme.textTheme.bodyLarge?.copyWith(
-        color: selected ? colors.onPrimary : colors.onSurface,
+        color: labelColor,
         fontWeight: FontWeight.w600,
+        decoration: enabled ? null : TextDecoration.lineThrough,
+        decorationColor: disabledColor,
       ),
     );
   }
