@@ -1,62 +1,77 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'firebase_options.dart';
-import 'features/home/home_screen.dart';
-import 'services/auth_service.dart';
-import 'views/login_view.dart';
+import 'core/router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Configuración multiplataforma de Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
-  // Inicialización de localización para formateo de fechas
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await initializeDateFormatting('es');
-
   runApp(const MainApp());
 }
+
+const _navy = Color(0xFF0E1826);
+const _surface = Color(0xFF1B2A3F);
+const _teal = Color(0xFF2DD4BF);
+const _secondaryText = Color(0xFF94A3B8);
 
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
+    return MaterialApp.router(
       title: 'MotORTs',
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF0B111A),
-        primaryColor: const Color(0xFF00D2A0),
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: _navy,
         colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF00D2A0),
-          surface: Color(0xFF131D2A),
+          primary: _teal,
+          onPrimary: _navy,
+          surface: _surface,
+          onSurface: Colors.white,
         ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: _navy,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: false,
+          titleTextStyle: TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+          ),
+          iconTheme: IconThemeData(color: Colors.white),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _teal,
+            foregroundColor: _navy,
+            elevation: 0,
+            textStyle: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+        ),
+        snackBarTheme: SnackBarThemeData(
+          backgroundColor: _surface,
+          contentTextStyle: const TextStyle(color: Colors.white),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        iconTheme: const IconThemeData(color: _secondaryText),
+        dividerColor: const Color(0xFF2A3D57),
       ),
-      home: StreamBuilder<User?>(
-        stream: AuthService().authStateChanges,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(
-              backgroundColor: Color(0xFF0B111A),
-              body: Center(
-                child: CircularProgressIndicator(color: Color(0xFF00D2A0)),
-              ),
-            );
-          }
-
-          if (snapshot.hasData && snapshot.data != null) {
-            return const HomeScreen();
-          }
-
-          return const LoginView();
-        },
-      ),
+      routerConfig: appRouter,
     );
   }
 }

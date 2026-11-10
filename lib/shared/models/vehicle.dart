@@ -1,4 +1,3 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Vehicle {
@@ -42,7 +41,8 @@ class Vehicle {
 
   factory Vehicle.fromFirestore(String docId, Map<String, dynamic> data) {
     final imagesList = List<String>.from(data['images'] ?? []);
-    final mainImage = data['imageUrl'] ??
+    final mainImage =
+        data['imageUrl'] ??
         data['imagenUrl'] ??
         (imagesList.isNotEmpty ? imagesList.first : '');
 
@@ -50,8 +50,11 @@ class Vehicle {
       id: docId,
       brand: data['brand'] ?? data['marca'] ?? 'Sin marca',
       model: data['model'] ?? data['modelo'] ?? 'Sin modelo',
-      year: (data['year'] ?? data['anio'] ?? 0) as int,
-      kilometers: (data['kilometers'] ?? data['kilometraje'] ?? data['km'] ?? 0) as int,
+      year: ((data['year'] ?? data['anio'] ?? 0) as num).toInt(),
+      kilometers:
+          ((data['kilometers'] ?? data['kilometraje'] ?? data['km'] ?? 0)
+                  as num)
+              .toInt(),
       price: ((data['price'] ?? data['precio'] ?? 0) as num).toDouble(),
       fuel: data['fuel'] ?? data['combustible'] ?? 'Nafta',
       transmission: data['transmission'] ?? data['transmision'] ?? 'Manual',
@@ -63,18 +66,20 @@ class Vehicle {
       status: data['status'] ?? 'active',
       createdAt: data['createdAt'] != null
           ? (data['createdAt'] is Timestamp
-              ? (data['createdAt'] as Timestamp).toDate()
-              : DateTime.tryParse(data['createdAt'].toString()) ?? DateTime.now())
+                ? (data['createdAt'] as Timestamp).toDate()
+                : DateTime.tryParse(data['createdAt'].toString()) ??
+                      DateTime.now())
           : DateTime.now(),
       updatedAt: data['updatedAt'] != null
           ? (data['updatedAt'] is Timestamp
-              ? (data['updatedAt'] as Timestamp).toDate()
-              : DateTime.tryParse(data['updatedAt'].toString()) ?? DateTime.now())
+                ? (data['updatedAt'] as Timestamp).toDate()
+                : DateTime.tryParse(data['updatedAt'].toString()) ??
+                      DateTime.now())
           : DateTime.now(),
       deletedAt: data['deletedAt'] != null
           ? (data['deletedAt'] is Timestamp
-              ? (data['deletedAt'] as Timestamp).toDate()
-              : DateTime.tryParse(data['deletedAt'].toString()))
+                ? (data['deletedAt'] as Timestamp).toDate()
+                : DateTime.tryParse(data['deletedAt'].toString()))
           : null,
     );
   }
@@ -88,16 +93,10 @@ class Vehicle {
 
   String get formattedPrice {
     final priceInt = price.toInt();
-    return '\$${priceInt.toString().replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m[0]}.',
-        )}';
+    return '\$${priceInt.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[0]}.')}';
   }
 
   String get formattedKilometers {
-    return '${kilometers.toString().replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m[0]}.',
-        )} km';
+    return '${kilometers.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[0]}.')} km';
   }
 }
