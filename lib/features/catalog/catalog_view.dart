@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import '../../shared/models/vehicle.dart';
-import '../../shared/widgets/vehicle_card.dart';
 import '../../shared/widgets/empty_state_widget.dart';
+import '../../shared/widgets/vehicle_card.dart';
 import 'vehicle_detail_view.dart';
 
 class CatalogView extends StatefulWidget {
@@ -24,6 +24,7 @@ class _CatalogViewState extends State<CatalogView> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedBrand = 'Todas';
+
   late final Stream<QuerySnapshot> _vehiclesStream;
 
   @override
@@ -80,39 +81,57 @@ class _CatalogViewState extends State<CatalogView> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: const Color(0xFF0E1826),
       appBar: AppBar(
-        title: const Text('Explorar'),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.notifications_none),
-            tooltip: 'Notificaciones',
+        backgroundColor: const Color(0xFF0E1826),
+        elevation: 0,
+        title: const Text(
+          'MotORTs',
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1.2,
+            color: Color(0xFF2DD4BF),
+            fontSize: 22,
           ),
-          const SizedBox(width: 4),
-        ],
+        ),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: _vehiclesStream,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return const Center(
-              child: Text('Error al conectar con la base de datos'),
+              child: Text(
+                'Error al conectar con la base de datos',
+                style: TextStyle(color: Colors.white70),
+              ),
             );
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
-              child: CircularProgressIndicator(),
+              child: CircularProgressIndicator(color: Color(0xFF2DD4BF)),
             );
           }
 
           final docs = snapshot.data?.docs ?? [];
-          final vehicles = docs.map((doc) {
-            return Vehicle.fromFirestore(
-              doc.id,
-              doc.data() as Map<String, dynamic>,
-            );
-          }).where((v) => v.isPublished).toList();
+          final vehicles = docs
+              .map((doc) {
+                return Vehicle.fromFirestore(
+                  doc.id,
+                  doc.data() as Map<String, dynamic>,
+                );
+              })
+              .where((v) => v.isPublished)
+              .toList();
+
+          // Extracción dinámica de marcas directamente desde Firestore
+          final dynamicBrands = <String>{'Todas'};
+          for (final v in vehicles) {
+            if (v.brand.trim().isNotEmpty && v.brand != 'Sin marca') {
+              dynamicBrands.add(v.brand.trim());
+            }
+          }
+          final brandsList = dynamicBrands.toList();
 
           final filteredVehicles = vehicles.where((car) {
             final query = _searchQuery.toLowerCase();
@@ -129,7 +148,8 @@ class _CatalogViewState extends State<CatalogView> {
 
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-            itemCount: filteredVehicles.isEmpty ? 2 : filteredVehicles.length + 1,
+            itemCount:
+                filteredVehicles.isEmpty ? 2 : filteredVehicles.length + 1,
             separatorBuilder: (context, index) => const SizedBox(height: 16),
             itemBuilder: (context, index) {
               if (index == 0) {
@@ -146,6 +166,7 @@ class _CatalogViewState extends State<CatalogView> {
                     ),
                     const SizedBox(height: 14),
                     _FilterPills(
+                      brands: brandsList,
                       selectedBrand: _selectedBrand,
                       onBrandSelected: (brand) {
                         setState(() {
@@ -169,7 +190,8 @@ class _CatalogViewState extends State<CatalogView> {
                   padding: const EdgeInsets.only(top: 40.0),
                   child: EmptyStateWidget(
                     title: 'No se encontraron vehículos',
-                    subtitle: 'Probá ajustando la búsqueda o quitando los filtros de marca.',
+                    subtitle:
+                        'Probá ajustando la búsqueda o quitando los filtros de marca.',
                     buttonText: 'Limpiar filtros',
                     onButtonPressed: _clearFilters,
                   ),
@@ -225,7 +247,7 @@ class _SearchBar extends StatelessWidget {
               ),
             ),
           ),
-          const Icon(Icons.tune, color: Color(0xFF2DD4BF), size: 22),
+          
         ],
       ),
     );
@@ -233,22 +255,16 @@ class _SearchBar extends StatelessWidget {
 }
 
 class _FilterPills extends StatelessWidget {
+  final List<String> brands;
   final String selectedBrand;
   final ValueChanged<String> onBrandSelected;
 
   const _FilterPills({
+  
+    required this.brands,
     required this.selectedBrand,
     required this.onBrandSelected,
   });
-
-  static const _brands = [
-    'Todas',
-    'Honda',
-    'Toyota',
-    'Volkswagen',
-    'Ford',
-    'Chevrolet'
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -256,11 +272,11 @@ class _FilterPills extends StatelessWidget {
       height: 38,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: _brands.length,
+        itemCount: brands.length,
         separatorBuilder: (context, index) => const SizedBox(width: 10),
         itemBuilder: (context, index) {
-          final brand = _brands[index];
-          final isSelected = selectedBrand == brand;
+          final brand = brands[index];
+          final isSelected = selectedBrand.toLowerCase() == brand.toLowerCase();
           return _Pill(
             text: brand,
             isSelected: isSelected,
@@ -292,12 +308,12 @@ class _Pill extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          color:
-              isSelected ? const Color(0xFF2DD4BF) : const Color(0xFF1B2A3F),
+          color: isSelected ? const Color(0xFF2DD4BF) : const Color(0xFF1B2A3F),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color:
-                isSelected ? const Color(0xFF2DD4BF) : const Color(0xFF2A3D57),
+            color: isSelected
+                ? const Color(0xFF2DD4BF)
+                : const Color(0xFF2A3D57),
           ),
         ),
         child: Center(
