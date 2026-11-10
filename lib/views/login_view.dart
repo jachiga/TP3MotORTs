@@ -117,7 +117,7 @@ return Scaffold(
 
               // --- CAMPO EMAIL ---
               const Text(
-                'EMAIL O USUARIO',
+                'EMAIL',
                 style: TextStyle(
                   color: textMuted,
                   fontSize: 12,

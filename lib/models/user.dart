@@ -2,14 +2,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class User {
 final String uid;
-final String username;
+final String fullName;
 final String email;
 final String role;
 final DateTime? createdAt;
 
 User({
 required this.uid,
-required this.username,
+required this.fullName,
 required this.email,
 required this.role,
 this.createdAt,
@@ -23,7 +23,7 @@ return null;
 
 return User(
   uid: docId,
-  username: data['username'] ?? data['nombre'] ?? 'Cliente',
+  fullName: data['fullName'] ?? data['nombre'] ?? 'Cliente',
   email: data['email'] ?? '',
   role: data['role'] ?? data['rol'] ?? 'client',
   createdAt: parseDate(data['createdAt']),
@@ -34,7 +34,7 @@ return User(
 
 Map<String, dynamic> toMap() {
 return {
-'username': username,
+'fullName': fullName,
 'email': email,
 'role': role,
 'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : null,

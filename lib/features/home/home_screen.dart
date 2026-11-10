@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../catalog/catalog_view.dart';
 import '../visits/my_visits_view.dart';
+import '../profile/profile_view.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,6 +17,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _views = [
     const CatalogView(),
     MyVisitsView(),
+    const ProfileView(),
   ];
 
   @override
@@ -46,6 +48,11 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(Icons.event_note_outlined),
             activeIcon: Icon(Icons.event_note),
             label: 'Mis Visitas',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'Mi Cuenta',
           ),
         ],
       ),
