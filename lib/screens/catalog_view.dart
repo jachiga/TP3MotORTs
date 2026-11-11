@@ -1,11 +1,12 @@
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../shared/models/vehicle.dart';
-import '../../shared/widgets/vehicle_card.dart';
+
+import '../shared/models/vehicle.dart';
+import '../shared/widgets/vehicle_card.dart';
 import 'vehicle_detail_view.dart';
 
 class CatalogView extends StatefulWidget {
+  static const String name = 'catalog';
   const CatalogView({super.key});
 
   @override
@@ -22,8 +23,9 @@ class _CatalogViewState extends State<CatalogView> {
   @override
   void initState() {
     super.initState();
-    _vehiclesStream =
-        FirebaseFirestore.instance.collection('Vehiculos').snapshots();
+    _vehiclesStream = FirebaseFirestore.instance
+        .collection('Vehiculos')
+        .snapshots();
   }
 
   @override
@@ -43,9 +45,7 @@ class _CatalogViewState extends State<CatalogView> {
   void _openDetail(Vehicle car) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => VehicleDetailView(car: car),
-      ),
+      MaterialPageRoute(builder: (context) => VehicleDetailView(car: car)),
     );
   }
 
@@ -75,27 +75,30 @@ class _CatalogViewState extends State<CatalogView> {
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           final docs = snapshot.data?.docs ?? [];
-          final vehicles = docs.map((doc) {
-            return Vehicle.fromFirestore(
-              doc.id,
-              doc.data() as Map<String, dynamic>,
-            );
-          }).where((v) => v.isPublished).toList();
+          final vehicles = docs
+              .map((doc) {
+                return Vehicle.fromFirestore(
+                  doc.id,
+                  doc.data() as Map<String, dynamic>,
+                );
+              })
+              .where((v) => v.isPublished)
+              .toList();
 
           final filteredVehicles = vehicles.where((car) {
             final query = _searchQuery.toLowerCase();
-            final matchesSearch = query.isEmpty ||
+            final matchesSearch =
+                query.isEmpty ||
                 car.title.toLowerCase().contains(query) ||
                 car.brand.toLowerCase().contains(query) ||
                 car.model.toLowerCase().contains(query);
 
-            final matchesBrand = _selectedBrand == 'Todas' ||
+            final matchesBrand =
+                _selectedBrand == 'Todas' ||
                 car.brand.toLowerCase() == _selectedBrand.toLowerCase();
 
             return matchesSearch && matchesBrand;
@@ -209,7 +212,7 @@ class _FilterPills extends StatelessWidget {
     'Toyota',
     'Volkswagen',
     'Ford',
-    'Chevrolet'
+    'Chevrolet',
   ];
 
   @override
@@ -254,21 +257,21 @@ class _Pill extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          color:
-              isSelected ? const Color(0xFF2DD4BF) : const Color(0xFF1B2A3F),
+          color: isSelected ? const Color(0xFF2DD4BF) : const Color(0xFF1B2A3F),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color:
-                isSelected ? const Color(0xFF2DD4BF) : const Color(0xFF2A3D57),
+            color: isSelected
+                ? const Color(0xFF2DD4BF)
+                : const Color(0xFF2A3D57),
           ),
         ),
         child: Center(
           child: Text(
             text,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                  color: isSelected ? const Color(0xFF0E1826) : Colors.white,
-                ),
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              color: isSelected ? const Color(0xFF0E1826) : Colors.white,
+            ),
           ),
         ),
       ),
