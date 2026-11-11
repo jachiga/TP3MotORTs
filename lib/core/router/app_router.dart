@@ -1,12 +1,12 @@
-import '../screens/account_screen.dart';
-import '../screens/catalog_view.dart';
-import '../screens/favorites_screen.dart';
-import '../screens/my_visits_view.dart';
-import '../screens/home_screen.dart';
-import '../screens/main_shell.dart';
-import '../services/auth_service.dart';
-import '../views/login_view.dart';
+import '../../features/profile/profile_view.dart';
+import '../../features/catalog/catalog_view.dart';
 import '../../features/favorites/favorites_view.dart';
+import '../../features/visits/my_visits_view.dart';
+import '../../features/home/home_screen.dart';
+import '../../features/home/main_shell.dart';
+import '../../services/auth_service.dart';
+import '../../features/auth/login_view.dart';
+
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -63,7 +63,7 @@ final appRouter = GoRouter(
         StatefulShellBranch(
           routes: [
             GoRoute(
-              name: FavoritesScreen.name,
+              name: FavoritesView.name,
               path: '/favorites',
               builder: (context, state) => const FavoritesView(),
             ),
@@ -72,9 +72,9 @@ final appRouter = GoRouter(
         StatefulShellBranch(
           routes: [
             GoRoute(
-              name: AccountScreen.name,
-              path: '/account',
-              builder: (context, state) => const AccountScreen(),
+              name: 'profile',
+              path: '/profile',
+              builder: (context, state) => const ProfileView(),
             ),
           ],
         ),

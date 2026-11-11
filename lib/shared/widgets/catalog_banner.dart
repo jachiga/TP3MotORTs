@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-import '../core/app_colors.dart';
+import '../../core/theme/app_colors.dart';
 
 class CatalogBanner extends StatelessWidget {
   final VoidCallback onTap;

@@ -1,11 +1,12 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:go_router/go_router.dart';
-import '../../shared/models/vehicle.dart';
+import 'package:flutter/material.dart';
+
+import '../../models/vehicle.dart';
 import '../../shared/widgets/vehicle_card.dart';
-import '../../shared/widgets/empty_state_widget.dart';
-import '../../screens/vehicle_detail_view.dart';
+import '../catalog/vehicle_detail_view.dart';
 
 class FavoritesView extends StatefulWidget {
   static const String name = 'favorites';
@@ -17,79 +18,96 @@ class FavoritesView extends StatefulWidget {
 }
 
 class _FavoritesViewState extends State<FavoritesView> {
-  Set<String> _localFavorites = {};
-  late final Stream<QuerySnapshot> _vehiclesStream;
+  final Set<String> _favoriteIds = {};
+  late final Stream<QuerySnapshot<Map<String, dynamic>>> _vehiclesStream;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>?
+      _favoritesSubscription;
+  Object? _favoritesError;
+  bool _favoritesLoading = true;
 
   String? get _currentUid => FirebaseAuth.instance.currentUser?.uid;
 
   @override
   void initState() {
     super.initState();
-    _vehiclesStream =
-        FirebaseFirestore.instance.collection('Vehiculos').snapshots();
-    _loadUserFavorites();
+    _vehiclesStream = FirebaseFirestore.instance
+        .collection('Vehiculos')
+        .snapshots();
+    _listenToFavorites();
   }
 
-  void _loadUserFavorites() {
+  void _listenToFavorites() {
     final uid = _currentUid;
-    if (uid == null) return;
+    if (uid == null) {
+      _favoritesLoading = false;
+      return;
+    }
 
-    // Escucha en tiempo real la subcolección oficial de favoritos del usuario
-    FirebaseFirestore.instance
+    _favoritesSubscription = FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
         .collection('favorites')
         .snapshots()
-        .listen((snapshot) {
-      if (mounted) {
-        setState(() {
-          _localFavorites = snapshot.docs.map((doc) => doc.id).toSet();
-        });
-      }
-    });
+        .listen(
+          (snapshot) {
+            if (!mounted) return;
+            setState(() {
+              _favoriteIds
+                ..clear()
+                ..addAll(snapshot.docs.map((doc) => doc.id));
+              _favoritesError = null;
+              _favoritesLoading = false;
+            });
+          },
+          onError: (Object error, StackTrace stackTrace) {
+            if (!mounted) return;
+            setState(() {
+              _favoritesError = error;
+              _favoritesLoading = false;
+            });
+          },
+        );
   }
 
-  void _toggleFavourite(String autoId) async {
+  @override
+  void dispose() {
+    _favoritesSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _removeFavorite(String vehicleId) async {
     final uid = _currentUid;
-    if (uid == null) return;
+    if (uid == null) {
+      _showMessage('Debes iniciar sesión para modificar tus favoritos.');
+      return;
+    }
 
-    final bool isCurrentlyFav = _localFavorites.contains(autoId);
-
-    // Actualización instantánea en UI
-    setState(() {
-      if (isCurrentlyFav) {
-        _localFavorites.remove(autoId);
-      } else {
-        _localFavorites.add(autoId);
-      }
-    });
+    setState(() => _favoriteIds.remove(vehicleId));
 
     try {
-      final favDocRef = FirebaseFirestore.instance
+      await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
           .collection('favorites')
-          .doc(autoId);
-
-      if (isCurrentlyFav) {
-        await favDocRef.delete();
-      } else {
-        await favDocRef.set({
-          'vehicleId': autoId,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-      }
-    } catch (e) {
-      debugPrint('Error actualizando favorito en Firestore: $e');
+          .doc(vehicleId)
+          .delete();
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _favoriteIds.add(vehicleId));
+      _showMessage('No se pudo quitar el favorito: $error');
     }
   }
 
+  void _showMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
   void _openDetail(Vehicle car) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => VehicleDetailView(car: car),
-      ),
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => VehicleDetailView(car: car)),
     );
   }
 
@@ -98,78 +116,108 @@ class _FavoritesViewState extends State<FavoritesView> {
     return Scaffold(
       backgroundColor: const Color(0xFF0E1826),
       appBar: AppBar(
+        title: const Text('Favoritos'),
         backgroundColor: const Color(0xFF0E1826),
-        elevation: 0,
-        title: const Text(
-          'Favoritos',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: _vehiclesStream,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return const Center(
-              child: Text(
-                'Error al conectar con la base de datos',
-                style: TextStyle(color: Colors.white70),
-              ),
-            );
-          }
+      body: _buildBody(),
+    );
+  }
 
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF2DD4BF)),
-            );
-          }
+  Widget _buildBody() {
+    if (_currentUid == null) {
+      return const _FavoritesMessage(
+        icon: Icons.login,
+        message: 'Debes iniciar sesión para ver tus favoritos.',
+      );
+    }
 
-          final docs = snapshot.data?.docs ?? [];
-          final allVehicles = docs
-              .map((doc) {
-                return Vehicle.fromFirestore(
-                  doc.id,
-                  doc.data() as Map<String, dynamic>,
-                );
-              })
-              .where((v) => v.isPublished)
-              .toList();
+    if (_favoritesLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-          // Filtra los vehículos cuyos IDs coincidan con los de la subcolección
-          final favoriteVehicles = allVehicles
-              .where((car) => _localFavorites.contains(car.id))
-              .toList();
+    if (_favoritesError != null) {
+      return const _FavoritesMessage(
+        icon: Icons.error_outline,
+        message: 'No se pudieron cargar tus favoritos.',
+      );
+    }
 
-          if (favoriteVehicles.isEmpty) {
-            return EmptyStateWidget(
-              title: 'Todavía no guardaste favoritos',
-              subtitle:
-                  'Explorá autos y tocá el corazón para guardarlos acá.',
-              buttonText: 'Explorar autos',
-              icon: Icons.favorite_border,
-              onButtonPressed: () => context.go('/catalog'),
-            );
-          }
-
-          return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-            itemCount: favoriteVehicles.length,
-            separatorBuilder: (context, index) =>
-                const SizedBox(height: 16),
-            itemBuilder: (context, index) {
-              final car = favoriteVehicles[index];
-              return VehicleCard(
-                key: ValueKey(car.id),
-                car: car,
-                isFavourite: true,
-                onTap: () => _openDetail(car),
-                onToggleFavourite: () => _toggleFavourite(car.id),
-              );
-            },
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: _vehiclesStream,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const _FavoritesMessage(
+            icon: Icons.error_outline,
+            message: 'No se pudieron cargar los vehículos.',
           );
-        },
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final favoriteVehicles =
+            (snapshot.data?.docs ??
+                    const <QueryDocumentSnapshot<Map<String, dynamic>>>[])
+            .map((doc) => Vehicle.fromFirestore(doc.id, doc.data()))
+            .where(
+              (vehicle) =>
+                  vehicle.isPublished && _favoriteIds.contains(vehicle.id),
+            )
+            .toList();
+
+        if (favoriteVehicles.isEmpty) {
+          return const _FavoritesMessage(
+            icon: Icons.favorite_border,
+            message: 'Aún no tienes vehículos favoritos.',
+          );
+        }
+
+        return ListView.separated(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          itemCount: favoriteVehicles.length,
+          separatorBuilder: (context, index) => const SizedBox(height: 16),
+          itemBuilder: (context, index) {
+            final car = favoriteVehicles[index];
+            return VehicleCard(
+              key: ValueKey(car.id),
+              car: car,
+              isFavourite: true,
+              onTap: () => _openDetail(car),
+              onToggleFavourite: () => _removeFavorite(car.id),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _FavoritesMessage extends StatelessWidget {
+  final IconData icon;
+  final String message;
+
+  const _FavoritesMessage({required this.icon, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 48, color: const Color(0xFF94A3B8)),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: const Color(0xFFCBD5E1),
+                  ),
+            ),
+          ],
+        ),
       ),
     );
   }

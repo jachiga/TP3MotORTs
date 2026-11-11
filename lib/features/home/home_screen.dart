@@ -2,12 +2,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../core/app_colors.dart';
-import '../shared/models/vehicle.dart';
-import '../shared/repositories/vehicle_repository.dart';
-import '../widgets/catalog_banner.dart';
-import '../widgets/featured_car_card.dart';
-import 'vehicle_detail_view.dart';
+import '../../core/theme/app_colors.dart';
+import '../../models/vehicle.dart';
+import '../../repositories/vehicle_repository.dart';
+import '../../shared/widgets/catalog_banner.dart';
+import '../../shared/widgets/featured_car_card.dart';
+import '../catalog/vehicle_detail_view.dart';
 
 class HomeScreen extends StatefulWidget {
   static const String name = 'home';

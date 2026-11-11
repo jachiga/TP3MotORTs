@@ -1,8 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../shared/models/vehicle.dart';
-import '../shared/widgets/vehicle_card.dart' show VehicleImage;
-import 'schedule_visit_screen.dart';
+
+import '../../models/vehicle.dart';
+import '../../shared/widgets/vehicle_card.dart' show VehicleImage;
+import '../visits/schedule_visit_screen.dart';
 
 class VehicleDetailView extends StatefulWidget {
   static const String name = 'vehicle_detail';
