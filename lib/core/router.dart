@@ -6,7 +6,7 @@ import '../screens/home_screen.dart';
 import '../screens/main_shell.dart';
 import '../services/auth_service.dart';
 import '../views/login_view.dart';
-
+import '../../features/favorites/favorites_view.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -65,7 +65,7 @@ final appRouter = GoRouter(
             GoRoute(
               name: FavoritesScreen.name,
               path: '/favorites',
-              builder: (context, state) => const FavoritesScreen(),
+              builder: (context, state) => const FavoritesView(),
             ),
           ],
         ),

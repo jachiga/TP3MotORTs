@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
-
 import '../models/vehicle.dart';
 
 class VehicleCard extends StatelessWidget {
   final Vehicle car;
   final bool isFavourite;
   final VoidCallback onTap;
-  final VoidCallback onToggleFavourite;
+  final VoidCallback? onToggleFavourite;
+  final VoidCallback? onEdit;
 
   const VehicleCard({
     super.key,
     required this.car,
-    required this.isFavourite,
+    this.isFavourite = false,
     required this.onTap,
-    required this.onToggleFavourite,
+    this.onToggleFavourite,
+    this.onEdit,
   });
 
   @override
@@ -33,7 +34,7 @@ class VehicleCard extends StatelessWidget {
               children: [
                 VehicleImage(
                   url: car.imageUrl,
-                  height: 190,
+                  height: 120,
                   borderRadius: BorderRadius.zero,
                 ),
                 Positioned(
@@ -41,7 +42,7 @@ class VehicleCard extends StatelessWidget {
                   right: 10,
                   child: _FavButton(
                     isFavourite: isFavourite,
-                    onPressed: onToggleFavourite,
+                    onPressed: onToggleFavourite ?? () {},
                   ),
                 ),
               ],

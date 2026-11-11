@@ -1,31 +1,63 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'package:firebase_auth/firebase_auth.dart';
 import '../shared/models/vehicle.dart';
 import '../shared/widgets/vehicle_card.dart';
+import '../shared/widgets/empty_state_widget.dart';
 import 'vehicle_detail_view.dart';
 
 class CatalogView extends StatefulWidget {
   static const String name = 'catalog';
-  const CatalogView({super.key});
+
+  final Set<String>? favoriteIds;
+  final Function(String)? onToggleFavourite;
+
+  const CatalogView({
+    super.key,
+    this.favoriteIds,
+    this.onToggleFavourite,
+  });
 
   @override
   State<CatalogView> createState() => _CatalogViewState();
 }
 
 class _CatalogViewState extends State<CatalogView> {
-  final Set<String> _favourite = {};
+  final Set<String> _localFavourites = {};
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedBrand = 'Todas';
   late final Stream<QuerySnapshot> _vehiclesStream;
 
+  String? get _currentUid => FirebaseAuth.instance.currentUser?.uid;
+
   @override
   void initState() {
     super.initState();
-    _vehiclesStream = FirebaseFirestore.instance
-        .collection('Vehiculos')
-        .snapshots();
+    _vehiclesStream =
+        FirebaseFirestore.instance.collection('Vehiculos').snapshots();
+    _listenToFavorites();
+  }
+
+  void _listenToFavorites() {
+    final uid = _currentUid;
+    if (uid == null) return;
+
+    
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('favorites')
+        .snapshots()
+        .listen((snapshot) {
+      if (mounted) {
+        setState(() {
+          _localFavourites
+            ..clear()
+            ..addAll(snapshot.docs.map((doc) => doc.id));
+        });
+      }
+    });
   }
 
   @override
@@ -34,19 +66,68 @@ class _CatalogViewState extends State<CatalogView> {
     super.dispose();
   }
 
-  void _toggleFavourite(String autoId) {
+  void _toggleFavourite(String autoId) async {
+    final uid = _currentUid;
+    if (uid == null) {
+      debugPrint('No hay usuario autenticado para guardar favoritos');
+      return;
+    }
+
+    final bool isCurrentlyFav = _localFavourites.contains(autoId);
+
+ 
     setState(() {
-      if (!_favourite.remove(autoId)) {
-        _favourite.add(autoId);
+      if (isCurrentlyFav) {
+        _localFavourites.remove(autoId);
+      } else {
+        _localFavourites.add(autoId);
       }
     });
+
+    try {
+      final favDocRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('favorites')
+          .doc(autoId);
+
+      if (isCurrentlyFav) {
+      
+        await favDocRef.delete();
+      } else {
+        
+        await favDocRef.set({
+          'vehicleId': autoId,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+    } catch (e) {
+      debugPrint('Error guardando favorito en Firestore: $e');
+    }
+  }
+
+  bool _isCarFavourite(String autoId) {
+    if (widget.favoriteIds != null) {
+      return widget.favoriteIds!.contains(autoId);
+    }
+    return _localFavourites.contains(autoId);
   }
 
   void _openDetail(Vehicle car) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => VehicleDetailView(car: car)),
+      MaterialPageRoute(
+        builder: (context) => VehicleDetailView(car: car),
+      ),
     );
+  }
+
+  void _clearFilters() {
+    setState(() {
+      _searchController.clear();
+      _searchQuery = '';
+      _selectedBrand = 'Todas';
+    });
   }
 
   @override
@@ -54,28 +135,36 @@ class _CatalogViewState extends State<CatalogView> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: const Color(0xFF0E1826),
       appBar: AppBar(
-        title: const Text('Explorar'),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.notifications_none),
-            tooltip: 'Notificaciones',
+        backgroundColor: const Color(0xFF0E1826),
+        elevation: 0,
+        title: const Text(
+          'MotORTs',
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1.2,
+            color: Color(0xFF2DD4BF),
+            fontSize: 22,
           ),
-          const SizedBox(width: 4),
-        ],
+        ),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: _vehiclesStream,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return const Center(
-              child: Text('Error al conectar con la base de datos'),
+              child: Text(
+                'Error al conectar con la base de datos',
+                style: TextStyle(color: Colors.white70),
+              ),
             );
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: CircularProgressIndicator(color: Color(0xFF2DD4BF)),
+            );
           }
 
           final docs = snapshot.data?.docs ?? [];
@@ -89,16 +178,22 @@ class _CatalogViewState extends State<CatalogView> {
               .where((v) => v.isPublished)
               .toList();
 
+          final dynamicBrands = <String>{'Todas'};
+          for (final v in vehicles) {
+            if (v.brand.trim().isNotEmpty && v.brand != 'Sin marca') {
+              dynamicBrands.add(v.brand.trim());
+            }
+          }
+          final brandsList = dynamicBrands.toList();
+
           final filteredVehicles = vehicles.where((car) {
             final query = _searchQuery.toLowerCase();
-            final matchesSearch =
-                query.isEmpty ||
+            final matchesSearch = query.isEmpty ||
                 car.title.toLowerCase().contains(query) ||
                 car.brand.toLowerCase().contains(query) ||
                 car.model.toLowerCase().contains(query);
 
-            final matchesBrand =
-                _selectedBrand == 'Todas' ||
+            final matchesBrand = _selectedBrand == 'Todas' ||
                 car.brand.toLowerCase() == _selectedBrand.toLowerCase();
 
             return matchesSearch && matchesBrand;
@@ -106,7 +201,8 @@ class _CatalogViewState extends State<CatalogView> {
 
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-            itemCount: filteredVehicles.length + 1,
+            itemCount:
+                filteredVehicles.isEmpty ? 2 : filteredVehicles.length + 1,
             separatorBuilder: (context, index) => const SizedBox(height: 16),
             itemBuilder: (context, index) {
               if (index == 0) {
@@ -123,6 +219,7 @@ class _CatalogViewState extends State<CatalogView> {
                     ),
                     const SizedBox(height: 14),
                     _FilterPills(
+                      brands: brandsList,
                       selectedBrand: _selectedBrand,
                       onBrandSelected: (brand) {
                         setState(() {
@@ -141,12 +238,25 @@ class _CatalogViewState extends State<CatalogView> {
                 );
               }
 
+              if (filteredVehicles.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.only(top: 40.0),
+                  child: EmptyStateWidget(
+                    title: 'No se encontraron vehículos',
+                    subtitle:
+                        'Probá ajustando la búsqueda o quitando los filtros de marca.',
+                    buttonText: 'Limpiar filtros',
+                    onButtonPressed: _clearFilters,
+                  ),
+                );
+              }
+
               final car = filteredVehicles[index - 1];
 
               return VehicleCard(
                 key: ValueKey(car.id),
                 car: car,
-                isFavourite: _favourite.contains(car.id),
+                isFavourite: _isCarFavourite(car.id),
                 onTap: () => _openDetail(car),
                 onToggleFavourite: () => _toggleFavourite(car.id),
               );
@@ -198,22 +308,15 @@ class _SearchBar extends StatelessWidget {
 }
 
 class _FilterPills extends StatelessWidget {
+  final List<String> brands;
   final String selectedBrand;
   final ValueChanged<String> onBrandSelected;
 
   const _FilterPills({
+    required this.brands,
     required this.selectedBrand,
     required this.onBrandSelected,
   });
-
-  static const _brands = [
-    'Todas',
-    'Honda',
-    'Toyota',
-    'Volkswagen',
-    'Ford',
-    'Chevrolet',
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -221,11 +324,11 @@ class _FilterPills extends StatelessWidget {
       height: 38,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: _brands.length,
+        itemCount: brands.length,
         separatorBuilder: (context, index) => const SizedBox(width: 10),
         itemBuilder: (context, index) {
-          final brand = _brands[index];
-          final isSelected = selectedBrand == brand;
+          final brand = brands[index];
+          final isSelected = selectedBrand.toLowerCase() == brand.toLowerCase();
           return _Pill(
             text: brand,
             isSelected: isSelected,
@@ -260,18 +363,16 @@ class _Pill extends StatelessWidget {
           color: isSelected ? const Color(0xFF2DD4BF) : const Color(0xFF1B2A3F),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: isSelected
-                ? const Color(0xFF2DD4BF)
-                : const Color(0xFF2A3D57),
+            color: isSelected ? const Color(0xFF2DD4BF) : const Color(0xFF2A3D57),
           ),
         ),
         child: Center(
           child: Text(
             text,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-              color: isSelected ? const Color(0xFF0E1826) : Colors.white,
-            ),
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                  color: isSelected ? const Color(0xFF0E1826) : Colors.white,
+                ),
           ),
         ),
       ),

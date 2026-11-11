@@ -19,12 +19,14 @@ class MainNavBar extends StatelessWidget {
   static const _selected = Color(0xFF2EC4B6);
   static const _unselected = Color(0xFF8E9BAE);
 
+ 
   static const _items = [
-    (icon: 'assets/icons/home.svg', label: 'Inicio'),
-    (icon: 'assets/icons/search.svg', label: 'Explorar'),
-    (icon: 'assets/icons/heart.svg', label: 'Favoritos'),
-    (icon: 'assets/icons/user.svg', label: 'Mi Cuenta'),
+    (icon: 'icons/home.svg', label: 'Inicio'),
+    (icon: 'icons/search.svg', label: 'Explorar'),
+    (icon: 'icons/heart.svg', label: 'Favoritos'),
+    (icon: 'icons/user.svg', label: 'Mi Cuenta'),
   ];
+
 
   @override
   Widget build(BuildContext context) {

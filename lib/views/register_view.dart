@@ -308,7 +308,7 @@ class _RegisterViewState extends State<RegisterView> {
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Text(
                           'o registrarse con',
-                          style: TextStyle(color: textMuted.withOpacity(0.8), fontSize: 13),
+                          style: TextStyle(color: textMuted.withValues(alpha: 0.8), fontSize: 13),
                         ),
                       ),
                       const Expanded(child: Divider(color: Color(0xFF1E2C3D), thickness: 1)),
