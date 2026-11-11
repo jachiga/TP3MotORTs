@@ -96,7 +96,7 @@ return Scaffold(
                           style: TextStyle(color: Colors.white),
                         ),
                         TextSpan(
-                          text: 'ORTS',
+                          text: 'ORTs',
                           style: TextStyle(color: brandTeal),
                         ),
                       ],

@@ -1,4 +1,4 @@
-import '../screens/account_screen.dart';
+import '../features/profile/profile_view.dart';
 import '../screens/catalog_view.dart';
 import '../screens/favorites_screen.dart';
 import '../screens/my_visits_view.dart';
@@ -72,9 +72,9 @@ final appRouter = GoRouter(
         StatefulShellBranch(
           routes: [
             GoRoute(
-              name: AccountScreen.name,
-              path: '/account',
-              builder: (context, state) => const AccountScreen(),
+              name: 'profile',
+              path: '/profile',
+              builder: (context, state) => const ProfileView(),
             ),
           ],
         ),
