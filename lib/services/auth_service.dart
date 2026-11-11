@@ -50,6 +50,7 @@ class AuthService {
     required String password,
   }) async {
     try {
+
       final credential = await _auth.signInWithEmailAndPassword(
         email: email.trim(),
         password: password,
@@ -60,26 +61,37 @@ class AuthService {
         throw Exception('No se pudo obtener la información del usuario.');
       }
 
-      await user.reload();
-      final updatedUser = _auth.currentUser;
-
-      if (updatedUser != null && !updatedUser.emailVerified) {
-        await updatedUser.sendEmailVerification();
-        await signOut();
+      // Validar verificación de correo sobre la credencial actual (sin re-emitir authStateChanges)
+      if (!user.emailVerified) {
+        await user.sendEmailVerification();
+        await _auth.signOut();
         throw Exception(
-          'Tu correo electrónico no ha sido verificado. Te reenviamos un enlace de confirmación a $email.',
+          'Tu correo electrónico no ha sido verificado. Te reenviamos un enlace a $email.',
         );
       }
 
+      // Validar existencia y ROL de cliente en Firestore (Lógica traída de main)
       final userDoc = await _firestore.collection('users').doc(user.uid).get();
-      if (!userDoc.exists) {
-        await signOut();
+
+      if (userDoc.exists) {
+        final role = (userDoc.data()?['role'] ?? userDoc.data()?['rol'] ?? '')
+            .toString()
+            .toLowerCase();
+
+        if (role != 'client' && role != 'cliente') {
+          await _auth.signOut();
+          throw Exception('Acceso denegado: Esta app es solo para clientes.');
+        }
+      } else {
+        await _auth.signOut();
         throw Exception('No se encontró el registro del usuario en la base de datos.');
       }
 
       return credential;
     } on FirebaseAuthException catch (e) {
       throw Exception(_handleAuthException(e));
+    } catch (e) {
+      rethrow;
     }
   }
 
