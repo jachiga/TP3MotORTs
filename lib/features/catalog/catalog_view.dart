@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../models/vehicle.dart';
 import '../../shared/widgets/vehicle_card.dart';
@@ -19,6 +22,10 @@ class _CatalogViewState extends State<CatalogView> {
   String _searchQuery = '';
   String _selectedBrand = 'Todas';
   late final Stream<QuerySnapshot> _vehiclesStream;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>?
+      _favouritesSubscription;
+
+  String? get _currentUid => FirebaseAuth.instance.currentUser?.uid;
 
   @override
   void initState() {
@@ -26,20 +33,98 @@ class _CatalogViewState extends State<CatalogView> {
     _vehiclesStream = FirebaseFirestore.instance
         .collection('Vehiculos')
         .snapshots();
+    _listenToFavourites();
+  }
+
+  void _listenToFavourites() {
+    final uid = _currentUid;
+    if (uid == null) return;
+
+    _favouritesSubscription = FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('favorites')
+        .snapshots()
+        .listen(
+          (snapshot) {
+            if (!mounted) return;
+            setState(() {
+              _favourite
+                ..clear()
+                ..addAll(snapshot.docs.map((doc) => doc.id));
+            });
+          },
+          onError: (Object error, StackTrace stackTrace) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('No se pudieron sincronizar tus favoritos.'),
+              ),
+            );
+          },
+        );
   }
 
   @override
   void dispose() {
+    _favouritesSubscription?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
-  void _toggleFavourite(String autoId) {
+  Future<void> _toggleFavourite(String autoId) async {
+    final uid = _currentUid;
+    if (uid == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Debes iniciar sesión para guardar favoritos.'),
+        ),
+      );
+      return;
+    }
+
+    final wasFavourite = _favourite.contains(autoId);
+
     setState(() {
-      if (!_favourite.remove(autoId)) {
+      if (wasFavourite) {
+        _favourite.remove(autoId);
+      } else {
         _favourite.add(autoId);
       }
     });
+
+    final favDocRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('favorites')
+        .doc(autoId);
+
+    try {
+      if (wasFavourite) {
+        await favDocRef.delete();
+      } else {
+        await favDocRef.set({
+          'vehicleId': autoId,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+    } catch (error) {
+      if (!mounted) return;
+
+      setState(() {
+        if (wasFavourite) {
+          _favourite.add(autoId);
+        } else {
+          _favourite.remove(autoId);
+        }
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudo actualizar el favorito: $error'),
+        ),
+      );
+    }
   }
 
   void _openDetail(Vehicle car) {

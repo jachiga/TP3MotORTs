@@ -1,6 +1,6 @@
 import '../../features/profile/profile_view.dart';
 import '../../features/catalog/catalog_view.dart';
-import '../../features/favorites/favorites_screen.dart';
+import '../../features/favorites/favorites_view.dart';
 import '../../features/visits/my_visits_view.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/home/main_shell.dart';
@@ -63,9 +63,9 @@ final appRouter = GoRouter(
         StatefulShellBranch(
           routes: [
             GoRoute(
-              name: FavoritesScreen.name,
+              name: FavoritesView.name,
               path: '/favorites',
-              builder: (context, state) => const FavoritesScreen(),
+              builder: (context, state) => const FavoritesView(),
             ),
           ],
         ),
