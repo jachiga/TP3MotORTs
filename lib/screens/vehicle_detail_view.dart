@@ -1,10 +1,11 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../../shared/models/vehicle.dart';
-import '../../shared/widgets/vehicle_card.dart' show VehicleImage;
-import '../schedule/schedule_visit_screen.dart';
+import '../shared/models/vehicle.dart';
+import '../shared/widgets/vehicle_card.dart' show VehicleImage;
+import 'schedule_visit_screen.dart';
 
 class VehicleDetailView extends StatefulWidget {
+  static const String name = 'vehicle_detail';
   final Vehicle car;
 
   const VehicleDetailView({super.key, required this.car});
@@ -98,7 +99,8 @@ class _VehicleDetailViewState extends State<VehicleDetailView> {
                               return Image.network(
                                 images[index],
                                 fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) => const Center(
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Center(
                                   child: Icon(
                                     Icons.broken_image,
                                     size: 60,
@@ -146,9 +148,7 @@ class _VehicleDetailViewState extends State<VehicleDetailView> {
                                 child: Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.55)
-
-,
+                                    color: Colors.black.withValues(alpha: 0.55),
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(

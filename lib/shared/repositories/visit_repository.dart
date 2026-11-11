@@ -1,9 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/vehicle.dart';
 import '../models/visit.dart';
 
-const currentClientId = 'user_1';
+String get currentClientId => FirebaseAuth.instance.currentUser!.uid;
 
 class VisitRepository {
   final CollectionReference<Map<String, dynamic>> _visits;
