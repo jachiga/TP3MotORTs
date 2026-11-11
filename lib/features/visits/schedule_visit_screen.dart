@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
-import '../shared/models/vehicle.dart';
-import '../shared/repositories/visit_repository.dart';
-import '../shared/widgets/vehicle_card.dart' show VehicleImage;
+import '../../models/vehicle.dart';
+import '../../repositories/visit_repository.dart';
+import '../../shared/widgets/vehicle_card.dart' show VehicleImage;
 
 const _timeSlots = ['09:00', '10:30', '12:00', '14:00'];
 

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../shared/models/visit.dart';
-import '../shared/repositories/visit_repository.dart';
-import '../shared/widgets/vehicle_card.dart' show VehicleImage;
-import 'catalog_view.dart';
+import '../../models/visit.dart';
+import '../../repositories/visit_repository.dart';
+import '../../shared/widgets/vehicle_card.dart' show VehicleImage;
+import '../catalog/catalog_view.dart';
 
 class MyVisitsView extends StatefulWidget {
   static const String name = 'visits';

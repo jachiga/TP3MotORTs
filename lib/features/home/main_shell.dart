@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../widgets/main_nav_bar.dart';
+import '../../shared/widgets/main_nav_bar.dart';
 
 class MainShell extends StatelessWidget {
   final StatefulNavigationShell navigationShell;

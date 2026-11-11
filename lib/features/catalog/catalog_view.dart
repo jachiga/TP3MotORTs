@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../shared/models/vehicle.dart';
-import '../shared/widgets/vehicle_card.dart';
+import '../../models/vehicle.dart';
+import '../../shared/widgets/vehicle_card.dart';
 import 'vehicle_detail_view.dart';
 
 class CatalogView extends StatefulWidget {

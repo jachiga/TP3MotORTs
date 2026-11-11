@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-import '../core/app_colors.dart';
-import '../shared/models/vehicle.dart';
+import '../../core/theme/app_colors.dart';
+import '../../models/vehicle.dart';
 
 class FeaturedCarCard extends StatelessWidget {
   final Vehicle car;

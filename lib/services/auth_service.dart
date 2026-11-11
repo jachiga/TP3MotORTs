@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -9,14 +8,48 @@ class AuthService {
   Stream<User?> get authStateChanges => _auth.authStateChanges();
   User? get currentUser => _auth.currentUser;
 
-  /// Inicia sesión verificando que el rol sea de Cliente
+  // ---------------------------------------------------------------------------
+  // 1. REGISTRO CON EMAIL Y ENVÍO DE CORREO DE VERIFICACIÓN
+  // ---------------------------------------------------------------------------
+  Future<UserCredential> signUpWithEmailAndPassword({
+    required String email,
+    required String password,
+    required String fullName,
+  }) async {
+    try {
+      final credential = await _auth.createUserWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      );
+
+      final user = credential.user;
+      if (user != null) {
+        await user.sendEmailVerification();
+        await user.updateDisplayName(fullName.trim());
+
+        await _firestore.collection('users').doc(user.uid).set({
+          'fullName': fullName.trim(),
+          'email': email.trim(),
+          'role': 'client',
+          'status': 'active',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      return credential;
+    } on FirebaseAuthException catch (e) {
+      throw Exception(_handleAuthException(e));
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // 2. INICIO DE SESIÓN CON EMAIL Y CONTRASEÑA
+  // ---------------------------------------------------------------------------
   Future<UserCredential> signInWithEmailAndPassword({
     required String email,
     required String password,
   }) async {
     try {
-      debugPrint("🟡 [AuthService] Intentando conectar con Firebase Auth...");
-
       final credential = await _auth.signInWithEmailAndPassword(
         email: email.trim(),
         password: password,
@@ -27,98 +60,52 @@ class AuthService {
         throw Exception('No se pudo obtener la información del usuario.');
       }
 
-      debugPrint("🟢 [AuthService] Login exitoso en Auth. UID: ${user.uid}");
-      debugPrint("🟡 [AuthService] Verificando rol en la colección 'users'...");
+      await user.reload();
+      final updatedUser = _auth.currentUser;
 
-      // Consulta en la colección unificada 'users' (minúscula)
+      if (updatedUser != null && !updatedUser.emailVerified) {
+        await updatedUser.sendEmailVerification();
+        await signOut();
+        throw Exception(
+          'Tu correo electrónico no ha sido verificado. Te reenviamos un enlace de confirmación a $email.',
+        );
+      }
+
       final userDoc = await _firestore.collection('users').doc(user.uid).get();
-
-      if (userDoc.exists) {
-        final role = (userDoc.data()?['role'] ?? userDoc.data()?['rol'] ?? '')
-            .toString()
-            .toLowerCase();
-
-        debugPrint("🟢 [AuthService] Rol encontrado en Firestore: '$role'");
-
-        if (role != 'client' && role != 'cliente') {
-          debugPrint("🔴 [AuthService] Rol no permitido para App Cliente. Cerrando sesión...");
-          await signOut();
-          throw Exception('Acceso denegado: Esta app es solo para clientes.');
-        }
-      } else {
-        debugPrint("⚠️ [AuthService] El usuario existe en Auth pero no tiene documento en 'users'.");
+      if (!userDoc.exists) {
+        await signOut();
+        throw Exception('No se encontró el registro del usuario en la base de datos.');
       }
 
       return credential;
     } on FirebaseAuthException catch (e) {
-      debugPrint("🔴 [AuthService] Error de Firebase Auth (${e.code}): ${e.message}");
-      throw Exception(_handleAuthException(e));
-    } catch (e) {
-      debugPrint("🔴 [AuthService] Error inesperado: $e");
-      rethrow;
-    }
-  }
-
-  /// Registro de nuevos clientes
-  Future<UserCredential> registerWithEmailAndPassword({
-    required String fullName,
-    required String email,
-    required String password,
-  }) async {
-    try {
-      debugPrint("🟡 [AuthService] Registrando nuevo cliente en Auth...");
-
-      final credential = await _auth.createUserWithEmailAndPassword(
-        email: email.trim(),
-        password: password,
-      );
-
-      final user = credential.user;
-      if (user != null) {
-        await user.updateDisplayName(fullName);
-
-        debugPrint("🟢 [AuthService] Usuario creado en Auth. Guardando documento en Firestore 'users'...");
-
-        // Guardado estandarizado en 'users'
-        await _firestore.collection('users').doc(user.uid).set({
-          'fullName': fullName,
-          'email': email.trim(),
-          'role': 'client',
-          'status': 'active',
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-
-        debugPrint("🟢 [AuthService] Documento creado con éxito en 'users'.");
-      }
-
-      return credential;
-    } on FirebaseAuthException catch (e) {
-      debugPrint("🔴 [AuthService] Error en Registro (${e.code}): ${e.message}");
       throw Exception(_handleAuthException(e));
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // 3. CIERRE DE SESIÓN
+  // ---------------------------------------------------------------------------
   Future<void> signOut() async {
-    debugPrint("🟡 [AuthService] Cerrando sesión...");
     await _auth.signOut();
   }
 
   String _handleAuthException(FirebaseAuthException e) {
     switch (e.code) {
-      case 'email-already-in-use':
-        return 'El correo ya se encuentra registrado.';
-      case 'invalid-email':
-        return 'El correo ingresado no es válido.';
-      case 'weak-password':
-        return 'La contraseña es muy débil. Debe tener al menos 8 caracteres.';
+      case 'invalid-credential':
+        return 'Email o contraseña incorrectos.';
       case 'user-not-found':
         return 'No existe una cuenta registrada con este correo.';
       case 'wrong-password':
         return 'Contraseña incorrecta.';
-      case 'invalid-credential':
-        return 'Credenciales inválidas. Revisa el correo y la contraseña.';
+      case 'email-already-in-use':
+        return 'Ya existe una cuenta vinculada a este correo electrónico.';
+      case 'invalid-email':
+        return 'El formato de correo no es válido.';
+      case 'user-disabled':
+        return 'Esta cuenta ha sido deshabilitada.';
       default:
-        return e.message ?? 'Ocurrió un error en la autenticación.';
+        return 'Error de autenticación: ${e.message ?? e.code}';
     }
   }
 }

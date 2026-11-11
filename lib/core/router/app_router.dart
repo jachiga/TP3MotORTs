@@ -1,11 +1,11 @@
-import '../features/profile/profile_view.dart';
-import '../screens/catalog_view.dart';
-import '../screens/favorites_screen.dart';
-import '../screens/my_visits_view.dart';
-import '../screens/home_screen.dart';
-import '../screens/main_shell.dart';
-import '../services/auth_service.dart';
-import '../views/login_view.dart';
+import '../../features/profile/profile_view.dart';
+import '../../features/catalog/catalog_view.dart';
+import '../../features/favorites/favorites_screen.dart';
+import '../../features/visits/my_visits_view.dart';
+import '../../features/home/home_screen.dart';
+import '../../features/home/main_shell.dart';
+import '../../services/auth_service.dart';
+import '../../features/auth/login_view.dart';
 
 import 'dart:async';
 
